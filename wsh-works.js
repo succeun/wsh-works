@@ -1,6 +1,6 @@
 /* ========================================================================= 
- * WSH-Works WSH JavaScript framework, version 0.0.1
- *  (c) 2009-2009 Jeong-Ho, Eun
+ * WSH-Works is WSH(Windows Script Host) javascript wrapper library
+ *  (c) 2009-2014 Jeong-Ho, Eun
  * =========================================================================
  *
  * Copyright (c) 2011 Naz Hamid (nazhamid.com/weighshift.com)
