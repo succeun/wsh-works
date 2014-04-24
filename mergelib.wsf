@@ -1,0 +1,35 @@
+<job id="merge">
+   <script language="JScript" src="./lib/wsh-works.core.js"/>
+   <script language="JScript" src="./lib/wsh-works.io.js"/>
+   <script language="JScript">
+		/**
+		 * 영역별 라이브러리를 머지하여, 하나의 통합파일로 만든다.
+		 */
+		var licenseFile = "./license.txt";
+
+		var libDir = "./lib";
+		var mergeFileName = "wsh-works.js";
+
+		var fs = new FileSystem();
+		var lf = fs.file(licenseFile);
+		
+		var buf = new StringBuffer();
+		buf.append(lf.text());
+		var list = fs.dir(libDir).list(function(name) { 
+											return name.endsWith(".js");
+										}
+									);
+		var iter = new Iterator(list);
+		while (iter.hasNext()) {
+			var file = iter.next();
+			if (file.isFile()) {	
+				buf.append(file.text());
+			}
+		}
+		
+		var dir = fs.dir(".");
+		var file = dir.createFile(mergeFileName);
+		file.text(buf);
+		println("Merge success.");
+   </script>
+</job>

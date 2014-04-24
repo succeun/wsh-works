@@ -1,0 +1,38 @@
+<job id="example">
+	<script language="JScript" src="../wsh-works.js"/>
+	<script language="JScript">
+		// 현재 폴더 이터레이터를 이용하여 출력
+		var fs = new FileSystem();
+		var list = fs.dir(".").list();
+		var iter = new Iterator(list);
+		while (iter.hasNext()) {
+			var file = iter.next();
+			if (file.isFile()) {	
+				println(file.path() + " " + file.size());
+			}
+		}
+
+		// 폴더 파일 내역 출력
+		var fs = new FileSystem();
+		fs.iterateFiles("../lib", function(file) {
+									println(file.path() + " " + file.size());
+								}
+						);
+
+		
+		// 현재 경로의 부모 경로 출력
+		println(fs.dir(".").parent().path());
+		
+		var filename = "test.txt";
+
+		// 텍스트 파일 생성
+		var f = fs.dir(".").createFile(filename);
+		f.text("This is test text. 테스트입니다.");
+
+		// 텍스트 파일 출력
+		println(fs.file(filename).text());
+		
+		// 파일 삭제
+		fs.file(filename).remove(true);
+	</script>
+</job>

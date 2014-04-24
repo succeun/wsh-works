@@ -1,0 +1,18 @@
+<job id="DLLDownloader">
+	<script language="JScript" src="../wsh-works.js"/>
+	<script language="JScript">
+		
+		var url = "http://www.google.co.kr";
+		var path = "test.txt";
+		var downloader = new Downloader();
+		downloader.receive(url, path, 
+							function(xmlhttp) {
+								//
+							},
+							function(xmlhttp) {
+								WScript.Echo("파일을 다운로드할 수 없습니다.");
+							}
+						);
+
+	</script>
+</job>

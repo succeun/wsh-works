@@ -1,0 +1,11 @@
+<job id="example">
+    <script language="JScript" src="../wsh-works.js"/>
+	<script language="JScript">
+		var http = new Connection();
+		http.call("http://www.daum.net");
+		if (http.isSuccess())
+			println(http.getText());
+		
+		println(Base64.encode("abcdef="));
+	</script>
+</job>
