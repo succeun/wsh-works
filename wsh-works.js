@@ -1,1488 +1,1523 @@
-/* ========================================================================= 
- * WSH-Works is WSH(Windows Script Host) javascript wrapper library
- *  (c) 2009-2014 Jeong-Ho, Eun
+ï»¿/* ========================================================================= 
+ * WSH-Works WSH JavaScript framework, version 0.0.1
+ *  (c) 2009-2009 Jeong-Ho, Eun
  * =========================================================================
  *
- * Copyright (c) 2011 Naz Hamid (nazhamid.com/weighshift.com)
- *  
- * Permission is hereby granted, free of charge, to any person obtaining
- * a copy of this software and associated documentation files (the
- * "Software"), to deal in the Software without restriction, including
- * without limitation the rights to use, copy, modify, merge, publish,
- * distribute, sublicense, and/or sell copies of the Software, and to
- * permit persons to whom the Software is furnished to do so, subject to
- * the following conditions:
- 
- * The above copyright notice and this permission notice shall be
- * included in all copies or substantial portions of the Software.
- 
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
- * EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
- * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
- * NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE
- * LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
- * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
- * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+ *  WSH-Works is freely distributable under the terms of an MIT-style license.
+ *  For details, see the Prototype web site: http://www.jsworks.org/
  *
  * ========================================================================= */
  
 function Excel() {
-	this.excel = new ActiveXObject("Excel.Application");
+    this.excel = new ActiveXObject("Excel.Application");
 
-	this.books = function (filename) {
-		this.excel.Workbooks.Open(filename, false, false);
-		return new Book(this.excel.ActiveWorkbook);
-	}
+    this.books = function (filename) {
+        var fs = new FileSystem();
+        var isExist = fs.exists(filename);
+        if (isExist) {
+            this.excel.Workbooks.Open(filename, false, false);
+            return new Book(this.excel.ActiveWorkbook, false, filename);
+        } else {
+            var workbook = this.excel.Workbooks.Add();
+            return new Book(workbook, true, filename);
+        }
+    }
 
-	this.visible = function(value) {
-		//Setter
-		if (arguments.length > 0)
-		{
-			this.excel.Visible = arguments[0];
-		} else {
-			//Getter
-			return this.excel.Visible;
-		}
-	}
+    this.visible = function(value) {
+        //Setter
+        if (arguments.length > 0)
+        {
+            this.excel.Visible = arguments[0];
+        } else {
+            //Getter
+            return this.excel.Visible;
+        }
+    }
 
-	this.quit = function() {
-		this.excel.Quit();
-	}
+    this.quit = function() {
+        this.excel.Quit();
+    }
 
-	function Book(workBook) {
-		this.book = workBook;
-		
-		this.book.Saved = true;	// ÀúÀå °¡´ÉÅä·Ï ¼³Á¤
+    function Book(workBook, isNew, filename) {
+        this.book = workBook;
+        this.isNew = isNew;
+        this.filename = filename;
+        
+        this.book.Saved = true;    // ì €ì¥ ê°€ëŠ¥í† ë¡ ì„¤ì •
 
-		this.sheets = function(index) {
-			if (index == null) {	// index°¡ ¾ø´Ù¸é, ÀüÃ¼ CollectionsÀ» ¹İÈ¯
-				var cnt = this.book.Worksheets.Count;
-				var colls = new Array();
-				for (var i = 0; i < cnt; i++) {
-					colls[i] = new Sheet(this.book.Worksheets(i + 1));
-				}
-				return colls;
-			} else {
-				if (index <= 0)	
-					throw new Error('Index is bigger than 0');
-				return new Sheet(this.book.Worksheets(index));
-			}
-		}
+        this.sheets = function(index) {
+            if (index == null) {    // indexê°€ ì—†ë‹¤ë©´, ì „ì²´ Collectionsì„ ë°˜í™˜
+                var cnt = this.book.Worksheets.Count;
+                var colls = new Array();
+                for (var i = 0; i < cnt; i++) {
+                    colls[i] = new Sheet(this.book.Worksheets(i + 1));
+                }
+                return colls;
+            } else {
+                if (index <= 0)    
+                    throw new Error('Index is bigger than 0');
+                return new Sheet(this.book.Worksheets(index));
+            }
+        }
 
-		this.sheetsCount = function() {
-			return this.book.Worksheets.Count;
-		}
+        this.sheetsCount = function() {
+            return this.book.Worksheets.Count;
+        }
 
-		this.close = function() {
-			this.book.Close(true);	// ±âº»ÀûÀ¸·Î º¯°æµÇ¸é µ¤¾î¾²°Ô ÇÔ
-		}
-		
-		this.save = function() {
-			this.book.Save();
-		}
+        this.close = function() {
+            this.book.Close(true);    // ê¸°ë³¸ì ìœ¼ë¡œ ë³€ê²½ë˜ë©´ ë®ì–´ì“°ê²Œ í•¨
+        }
+        
+        this.save = function() {
+            if (this.isNew) {
+                println(this.filename);
+                this.book.SaveAs(this.filename);
+            } else {
+                this.book.Save();
+            }
+        }
 
-		this.saveAs = function(filename) {
-			this.book.SaveAs(filename);
-		}
+        this.saveAs = function(filename) {
+            this.book.SaveAs(filename);
+        }
 
-		this.name = function() {
-			//Setter
-			if (arguments.length > 0)
-			{
-				this.book.Name = arguments[0];
-			} else {
-				//Getter
-				return this.book.Name;
-			}
-		}
+        this.name = function() {
+            //Setter
+            if (arguments.length > 0)
+            {
+                this.book.Name = arguments[0];
+            } else {
+                //Getter
+                return this.book.Name;
+            }
+        }
 
-		this.toString = function() {
-			return "Book: "+ this.book.Name;
-		}
-	}
+        this.toString = function() {
+            return "Book: "+ this.book.Name;
+        }
+    }
 
 
-	function Sheet(workSheet) {
-		this.sheet = workSheet;
+    function Sheet(workSheet) {
+        this.sheet = workSheet;
 
-		this.name = function() {
-			//Setter
-			if (arguments.length > 0)
-			{
-				this.sheet.Name = arguments[0];
-			} else {
-				//Getter
-				return this.sheet.Name;
-			}
-		}
-		
-		this.cells = function(xy, y) {
-			if (typeof(xy) == "number") {	// xy°¡ ÀÏ¹İ ¼ıÀÚÀÎ x¿Í µÎ¹øÂ° y°ªÀÌ µé¾î¿À¸é x,y ÁÂÇ¥·Î ¹İÈ¯ÇÑ´Ù.
-				var x = xy;
-				return new Cell(this.sheet.Cells(x, y));
-			}
-			
-			var re = new RegExp("([a-zA-Z~]+)([0-9~]+)","ig");
-			var arr = re.exec(xy);
-			var column = RegExp.$1;			// Column
-            var row = RegExp.$2;			// Row
-			column = this.itos(column);
-			row = parseInt(row);
-			return new Cell(this.sheet.Cells(row, column), xy);
-		}
+        this.name = function() {
+            //Setter
+            if (arguments.length > 0)
+            {
+                this.sheet.Name = arguments[0];
+            } else {
+                //Getter
+                return this.sheet.Name;
+            }
+        }
+        
+        this.cells = function(xy, y) {
+            if (typeof(xy) == "number") {    // xyê°€ ì¼ë°˜ ìˆ«ìì¸ xì™€ ë‘ë²ˆì§¸ yê°’ì´ ë“¤ì–´ì˜¤ë©´ x,y ì¢Œí‘œë¡œ ë°˜í™˜í•œë‹¤.
+                var x = xy;
+                return new Cell(this.sheet.Cells(x, y));
+            }
+            
+            var re = new RegExp("([a-zA-Z~]+)([0-9~]+)","ig");
+            var arr = re.exec(xy);
+            var column = RegExp.$1;            // Column
+            var row = RegExp.$2;            // Row
+            column = this.itos(column);
+            row = parseInt(row);
+            return new Cell(this.sheet.Cells(row, column), xy);
+        }
 
-		this.itos = function(value) {
-			var ASCII =  {"A":65, "B":66, "C":67, "D":68, "E":69, "F":70, "G":71, 
-						  "H":72, "I":73, "J":74, "K":75, "L":76, "M":77, "N":78,
-						  "O":79, "P":80, "Q":81, "R":82, "S":83, "T":84, "U":85, 
-						  "V":86, "W":87, "X":88, "Y":89, "Z":90};
+        this.itos = function(value) {
+            var ASCII =  {"A":65, "B":66, "C":67, "D":68, "E":69, "F":70, "G":71, 
+                          "H":72, "I":73, "J":74, "K":75, "L":76, "M":77, "N":78,
+                          "O":79, "P":80, "Q":81, "R":82, "S":83, "T":84, "U":85, 
+                          "V":86, "W":87, "X":88, "Y":89, "Z":90};
 
-			var str = value.toUpperCase();
-			var x = 0;
-			for (var i = 0; i < str.length; i++)
-			{
-				var j = (ASCII[ str.charAt(str.length - 1 - i) ] - 64);
-				x += j + i * 26;
-			}
+            var str = value.toUpperCase();
+            var x = 0;
+            for (var i = 0; i < str.length; i++)
+            {
+                var j = (ASCII[ str.charAt(str.length - 1 - i) ] - 64);
+                x += j + i * 26;
+            }
 
-			return x;
-		}
+            return x;
+        }
 
-		this.toString = function() {
-			return "Sheet: " + this.sheet.Name;
-		}
-	}
+        this.toString = function() {
+            return "Sheet: " + this.sheet.Name;
+        }
+    }
 
-	function Cell(cell, xy) {
-		this.cell = cell;
-		this.xy = xy;
-		
-		this.value = function() {
-			//Setter
-			if (arguments.length > 0)
-			{
-				this.cell.value = arguments[0];
-			} else {
-				//Getter
-				return this.cell.value;
-			}
-		}
+    function Cell(cell, xy) {
+        this.cell = cell;
+        this.xy = xy;
+        
+        this.value = function() {
+            //Setter
+            if (arguments.length > 0)
+            {
+                this.cell.value = arguments[0];
+            } else {
+                //Getter
+                return this.cell.value;
+            }
+        }
 
-		this.getValue = function() {
-			return this.cell.value;
-		}
+        this.getValue = function() {
+            return this.cell.value;
+        }
 
-		this.setValue = function(value) {
-			return this.cell.value = value;
-		}
+        this.setValue = function(value) {
+            return this.cell.value = value;
+        }
 
-		this.color = function() {	// 5 : blue
-			//Setter
-			if (arguments.length > 0)
-			{
-				this.cell.Interior.colorIndex = arguments[0];
-			} else {
-				//Getter
-				return this.cell.Interior.colorIndex;
-			}
-		}
+        this.color = function() {    // 5 : blue
+            //Setter
+            if (arguments.length > 0)
+            {
+                this.cell.Interior.colorIndex = arguments[0];
+            } else {
+                //Getter
+                return this.cell.Interior.colorIndex;
+            }
+        }
 
-		this.font = function() {
-			return new Font(this.cell);
-		}
-		
-		this.toString = function() {
-			return "Cell: " + this.xy;
-		}
-	}
+        this.font = function() {
+            return new Font(this.cell);
+        }
+        
+        this.toString = function() {
+            return "Cell: " + this.xy;
+        }
+    }
 
-	function Font(cell) {
-		this.cell = cell;
+    function Font(cell) {
+        this.cell = cell;
 
-		this.bold = function() {
-			//Setter
-			if (arguments.length > 0)
-			{
-				this.cell.Font.Bold = arguments[0];
-			} else {
-				//Getter
-				return this.cell.Font.Bold;
-			}
-		}
+        this.bold = function() {
+            //Setter
+            if (arguments.length > 0)
+            {
+                this.cell.Font.Bold = arguments[0];
+            } else {
+                //Getter
+                return this.cell.Font.Bold;
+            }
+        }
 
-		this.name = function() {
-			//Setter
-			if (arguments.length > 0)
-			{
-				this.cell.Font.Name = arguments[0];
-			} else {
-				//Getter
-				return this.cell.Font.Name;
-			}
-		}
+        this.name = function() {
+            //Setter
+            if (arguments.length > 0)
+            {
+                this.cell.Font.Name = arguments[0];
+            } else {
+                //Getter
+                return this.cell.Font.Name;
+            }
+        }
 
-		this.size = function() {
-			//Setter
-			if (arguments.length > 0)
-			{
-				this.cell.Font.Size = arguments[0];
-			} else {
-				//Getter
-				return this.cell.Font.Size;
-			}
-		}
-	}
+        this.size = function() {
+            //Setter
+            if (arguments.length > 0)
+            {
+                this.cell.Font.Size = arguments[0];
+            } else {
+                //Getter
+                return this.cell.Font.Size;
+            }
+        }
+    }
 
 }
 
 
 
 function InternetExplorer() {
-	this.ie = new ActiveXObject("InternetExplorer.Application");
+    this.ie = new ActiveXObject("InternetExplorer.Application");
 
-	this.nevigate = function(url) {
-		this.ie.Navigate(url);
-	}
+    this.nevigate = function(url) {
+        this.ie.Navigate(url);
+    }
 
-	this.quit = function() {
-		this.ie.Quit();
-	}
+    this.quit = function() {
+        this.ie.Quit();
+    }
 
-	this.visible = function(value) {
-		if (value == null)
-			return this.ie.Visible;
-		else
-			this.ie.Visible = value;
-	}
+    this.visible = function(value) {
+        if (value == null)
+            return this.ie.Visible;
+        else
+            this.ie.Visible = value;
+    }
 
-	this.addressBar = function(value) {
-		if (value == null)
-			return this.ie.addressBar;
-		else
-			this.ie.addressBar = value;
-	}
-	
-	this.menuBar = function(value) {
-		if (value == null)
-			return this.ie.MenuBar;
-		else
-			this.ie.MenuBar = value;
-	}
-	
-	this.statusBar = function(value) {
-		if (value == null)
-			return this.ie.StatusBar;
-		else
-			this.ie.StatusBar = value;
-	}
+    this.addressBar = function(value) {
+        if (value == null)
+            return this.ie.addressBar;
+        else
+            this.ie.addressBar = value;
+    }
+    
+    this.menuBar = function(value) {
+        if (value == null)
+            return this.ie.MenuBar;
+        else
+            this.ie.MenuBar = value;
+    }
+    
+    this.statusBar = function(value) {
+        if (value == null)
+            return this.ie.StatusBar;
+        else
+            this.ie.StatusBar = value;
+    }
 
-	this.toolBar = function(value) {
-		if (value == null)
-			return this.ie.ToolBar;
-		else
-			this.ie.ToolBar = value;
-	}
+    this.toolBar = function(value) {
+        if (value == null)
+            return this.ie.ToolBar;
+        else
+            this.ie.ToolBar = value;
+    }
 }
 
 
 
-// »ùÇÃ
+// ìƒ˜í”Œ
 // var reg = new Registry();
-// var sub_key = "SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Uninstall\\»§Áı_is1";
+// var sub_key = "SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Uninstall\\ë¹µì§‘_is1";
 // var value_name = "UninstallString";
 // var val = reg.GetExpandedStringValue(reg.HKLM, sub_key, value_name);
 // WScript.Echo(val);
 
 function Registry(computer) {
-	if(!computer) {
-		computer = ".";
-	}
+    if(!computer) {
+        computer = ".";
+    }
 
-	var locator = new ActiveXObject("WbemScripting.SWbemLocator");
-	var server = locator.ConnectServer(computer, "root\\default");
-	this.stdregprov = server.Get("StdRegProv");
+    var locator = new ActiveXObject("WbemScripting.SWbemLocator");
+    var server = locator.ConnectServer(computer, "root\\default");
+    this.stdregprov = server.Get("StdRegProv");
 
-	this.HKCR = 0x80000000;	// HKEY_CLASSES_ROOT
-	this.HKCU = 0x80000001;	// HKEY_CURRENT_USER
-	this.HKLM = 0x80000002;	// HKEY_LOCAL_MACHINE
-	this.HKUS = 0x80000003;	// HKEY_USERS
-	this.HKCC = 0x80000005;	// HKEY_CURRENT_CONFIG
+    this.HKCR = 0x80000000;    // HKEY_CLASSES_ROOT
+    this.HKCU = 0x80000001;    // HKEY_CURRENT_USER
+    this.HKLM = 0x80000002;    // HKEY_LOCAL_MACHINE
+    this.HKUS = 0x80000003;    // HKEY_USERS
+    this.HKCC = 0x80000005;    // HKEY_CURRENT_CONFIG
 
-	this.REG_SZ = 1;
-	this.REG_EXPAND_SZ = 2;
-	this.REG_BINARY = 3;
-	this.REG_DWORD = 4;
-	this.REG_MULTI_SZ = 7;
+    this.REG_SZ = 1;
+    this.REG_EXPAND_SZ = 2;
+    this.REG_BINARY = 3;
+    this.REG_DWORD = 4;
+    this.REG_MULTI_SZ = 7;
 
-	this.do_method = function(method_name, hkey, key, value_name) {
-		var in_param = this.stdregprov.Methods_.Item(method_name).InParameters.SpawnInstance_();
-		in_param.hDefKey = hkey;
-		in_param.sSubKeyName = key;
-		if(value_name != null)
-		{
-			in_param.sValueName = value_name;
-		}
-		var out = this.stdregprov.ExecMethod_(method_name, in_param);
-		return	out;
-	},
+    this.do_method = function(method_name, hkey, key, value_name) {
+        var in_param = this.stdregprov.Methods_.Item(method_name).InParameters.SpawnInstance_();
+        in_param.hDefKey = hkey;
+        in_param.sSubKeyName = key;
+        if(value_name != null)
+        {
+            in_param.sValueName = value_name;
+        }
+        var out = this.stdregprov.ExecMethod_(method_name, in_param);
+        return    out;
+    },
 
-	this.EnumKey = function(hkey, key) {
-		var out_param = this.do_method("EnumKey", hkey, key);
-		var names = [];
-		if(out_param.sNames != null)
-		{
-			names = out_param.sNames.toArray();
-		}
-		return	names;
-	},
+    this.EnumKey = function(hkey, key) {
+        var out_param = this.do_method("EnumKey", hkey, key);
+        var names = [];
+        if(out_param.sNames != null)
+        {
+            names = out_param.sNames.toArray();
+        }
+        return    names;
+    },
 
-	this.EnumValues = function(hkey, key) {
-		var out_param = this.do_method("EnumValues", hkey, key);
-		var value_names = [];
-		if(out_param.sNames != null)
-		{
-			value_names = out_param.sNames.toArray();
-		}
-		var value_types = [];
-		if(out_param.Types != null)
-		{
-			value_types = out_param.Types.toArray();
-		}
+    this.EnumValues = function(hkey, key) {
+        var out_param = this.do_method("EnumValues", hkey, key);
+        var value_names = [];
+        if(out_param.sNames != null)
+        {
+            value_names = out_param.sNames.toArray();
+        }
+        var value_types = [];
+        if(out_param.Types != null)
+        {
+            value_types = out_param.Types.toArray();
+        }
 
-		return	{
-			Names: value_names,
-			Types: value_types
-		};
-	},
+        return    {
+            Names: value_names,
+            Types: value_types
+        };
+    },
 
-	this.GetStringValue = function(hkey, key, name) {
-		// REG_SZ
-		var out_param = this.do_method("GetStringValue", hkey, key, name);
+    this.GetStringValue = function(hkey, key, name) {
+        // REG_SZ
+        var out_param = this.do_method("GetStringValue", hkey, key, name);
 
-		// Á¸ÀçÇÏÁö ¾ÊÀ¸¸é null
-		return out_param.sValue;
-	},
+        // ì¡´ì¬í•˜ì§€ ì•Šìœ¼ë©´ null
+        return out_param.sValue;
+    },
 
-	this.GetExpandedStringValue = function(hkey, key, name) {
-		// REG_EXPAND_SZ
-		var out_param = this.do_method("GetExpandedStringValue", hkey, key, name);
+    this.GetExpandedStringValue = function(hkey, key, name) {
+        // REG_EXPAND_SZ
+        var out_param = this.do_method("GetExpandedStringValue", hkey, key, name);
 
-		// Á¸ÀçÇÏÁö ¾ÊÀ¸¸é null
-		return out_param.sValue;
-	},
+        // ì¡´ì¬í•˜ì§€ ì•Šìœ¼ë©´ null
+        return out_param.sValue;
+    },
 
-	this.GetDWORDValue = function(hkey, key, name) {
-		// REG_DWORD
-		var out_param = this.do_method("GetDWORDValue", hkey, key, name);
+    this.GetDWORDValue = function(hkey, key, name) {
+        // REG_DWORD
+        var out_param = this.do_method("GetDWORDValue", hkey, key, name);
 
-		// Á¸ÀçÇÏÁö ¾ÊÀ¸¸é null
-		return out_param.uValue;
-	}
+        // ì¡´ì¬í•˜ì§€ ì•Šìœ¼ë©´ null
+        return out_param.uValue;
+    }
 }/**
- * Æ¯Á¤ ¹®ÀÚ¿­·Î ½ÃÀÛÇÏ´ÂÁö ¿©ºÎ¸¦ ¹İÈ¯ÇÑ´Ù.
+ * íŠ¹ì • ë¬¸ìì—´ë¡œ ì‹œì‘í•˜ëŠ”ì§€ ì—¬ë¶€ë¥¼ ë°˜í™˜í•œë‹¤.
  */
 String.prototype.startsWith = function(str) {
-								var p = this.indexOf(str);
-								if (p == 0)
-									return true;
-								return false;
-							}
+                                var p = this.indexOf(str);
+                                if (p == 0)
+                                    return true;
+                                return false;
+                            }
 
 /**
- * Æ¯Á¤ ¹®ÀÚ¿­·Î ³¡³ª´ÂÁö ¿©ºÎ¸¦ ¹İÈ¯ÇÑ´Ù.
+ * íŠ¹ì • ë¬¸ìì—´ë¡œ ëë‚˜ëŠ”ì§€ ì—¬ë¶€ë¥¼ ë°˜í™˜í•œë‹¤.
  */
 String.prototype.endsWith = function(str) {
-								var p = this.lastIndexOf(str);
-								if (p + str.length == this.length)
-									return true;
-								return false;
-							}
+                                var p = this.lastIndexOf(str);
+                                if (p + str.length == this.length)
+                                    return true;
+                                return false;
+                            }
 /**
- * String °´Ã¼ÀÇ trimÀ» ¾ÕµÚ °ø¹é ¸ğµÎ¸¦ Á¦°Å ÇÒ ¼ö ÀÖµµ·Ï ÀçÁ¤ÀÇ¸¦ ÇÑ´Ù.
+ * String ê°ì²´ì˜ trimì„ ì•ë’¤ ê³µë°± ëª¨ë‘ë¥¼ ì œê±° í•  ìˆ˜ ìˆë„ë¡ ì¬ì •ì˜ë¥¼ í•œë‹¤.
  */
 String.prototype.trim = function() {
-							return this.replace(/(^\s+)|\s+$/g, "");
-						}
+                            return this.replace(/(^\s+)|\s+$/g, "");
+                        }
 
 /**
- * ¹®ÀÚ¿­ ÀüÃ¼¿¡ ´ëÇÏ¿© replace AllÀ» ¼öÇàÇÑ´Ù.
+ * ë¬¸ìì—´ ì „ì²´ì— ëŒ€í•˜ì—¬ replace Allì„ ìˆ˜í–‰í•œë‹¤.
  */
 String.prototype.replaceAll = function(from, to){
-								return this.replace(new RegExp(from, "g"), to);
-							}
+                                return this.replace(new RegExp(from, "g"), to);
+                            }
 
 function println(str) {
-	System.println(str);
+    System.println(str);
 }
 
 var System = {
-	desktopPath : function() {
-					var wsh = new ActiveXObject("WScript.Shell");
-					return wsh.SpecialFolders.Item("Desktop");
-				},
-	
-	PROCESS_RUNNING : 0,
+    desktopPath : function() {
+                    var wsh = new ActiveXObject("WScript.Shell");
+                    return wsh.SpecialFolders.Item("Desktop");
+                },
+    homePath : function(){
+                    var WshShell = new ActiveXObject("WScript.Shell");
+                    var WshSysEnv = WshShell.Environment("PROCESS");
+                    var HOMEPATH = WshSysEnv("HOMEPATH");
+                    return HOMEPATH;
+		        },
+    
+    PROCESS_RUNNING : 0,
 
-	exec : function(command) {
-				var wsh = new ActiveXObject("WScript.Shell");
-				return new Exec(wsh.Exec(command));
+    exec : function(command) {
+                var wsh = new ActiveXObject("WScript.Shell");
+                return new Exec(wsh.Exec(command));
 
-				function Exec(wshScriptExec) {
-					this.wse = wshScriptExec;
-					
-					this.exitCode = function() {
-						return this.wse.ExitCode;
-					}
+                function Exec(wshScriptExec) {
+                    this.wse = wshScriptExec;
+                    
+                    this.exitCode = function() {
+                        return this.wse.ExitCode;
+                    }
 
-					this.processID = function() {
-						return this.wse.ProcessID;
-					}
+                    this.processID = function() {
+                        return this.wse.ProcessID;
+                    }
 
-					this.status = function() {
-						return this.wse.Status;
-					}
-					
-					this.stdErr = function() {
-						return this.wse.StdErr;
-					}
+                    this.status = function() {
+                        return this.wse.Status;
+                    }
+                    
+                    this.stdErr = function() {
+                        return this.wse.StdErr;
+                    }
 
-					this.stdErr = function() {
-						return this.wse.StdErr;
-					}
+                    this.stdErr = function() {
+                        return this.wse.StdErr;
+                    }
 
-					this.stdIn = function() {
-						return this.wse.stdIn;
-					}
+                    this.stdIn = function() {
+                        return this.wse.stdIn;
+                    }
 
-					this.stdOut = function() {
-						return this.wse.stdOut;
-					}
+                    this.stdOut = function() {
+                        return this.wse.stdOut;
+                    }
 
-					this.terminate = function() {
-						this.wse.Terminate();
-					}
-				}
-			},
+                    this.terminate = function() {
+                        this.wse.Terminate();
+                    }
+                }
+            },
 
-	sleep : function(time) {
-				WScript.Sleep(time);
-			},
-	
-	println : function(str) {
-		var value = String(str);
-		WScript.Echo(value);
-	},
-	
-	/**
-	 * ÇÁ·Î¼¼½º Kill
-	 * [¿¹Á¦]
-	 * System.killProcess("iexplore.exe");
-	 * param processName ÇÁ·Î¼¼½º¸í
-	 */
-	killProcess : function(processName) {
-		var computer = '.';
-		var WMIService = GetObject("winmgmts:{impersonationLevel=impersonate}!\\\\" + computer + "\\root\\cimv2");
-		var processList = WMIService.ExecQuery("Select * From Win32_Process Where Name = '"+processName+"'");
-		//WScript.Echo('Found ' + processList.Count + ' processes.');
-		var enumr = new Enumerator(processList);
-		while (!enumr.atEnd()) {
-			enumr.item().Terminate();
-			enumr.moveNext();
-		}
-	},
-	
-	/**
-	 * ·ÎÄÃ IP¸¦ È¹µæÇÑ´Ù.
-	 */
-	getLocalIP : function() {
-		var computer = '.';
-		var WMIService = GetObject("winmgmts:{impersonationLevel=impersonate}!\\\\" + computer + "\\root\\cimv2");
-		var netConfigSet = WMIService.ExecQuery("SELECT * FROM Win32_NetworkAdapterConfiguration");
-		var enumr = new Enumerator(netConfigSet);
-		while (!enumr.atEnd()) {
-			if (enumr.item().IPAddress != null) {
-				var ipAddresses = enumr.item().IPAddress.toArray();
-				for (k = 0; k < ipAddresses.length; k++) {
-					return ipAddresses[k];
-				}
-			}
-			enumr.moveNext();
-		}
-	},
+    sleep : function(time) {
+                WScript.Sleep(time);
+            },
+    
+    println : function(str) {
+        var value = String(str);
+        WScript.Echo(value);
+    },
+    
+    /**
+     * í”„ë¡œì„¸ìŠ¤ Kill
+     * [ì˜ˆì œ]
+     * System.killProcess("iexplore.exe");
+     * param processName í”„ë¡œì„¸ìŠ¤ëª…
+     */
+    killProcess : function(processName) {
+        var computer = '.';
+        var WMIService = GetObject("winmgmts:{impersonationLevel=impersonate}!\\\\" + computer + "\\root\\cimv2");
+        var processList = WMIService.ExecQuery("Select * From Win32_Process Where Name = '"+processName+"'");
+        //WScript.Echo('Found ' + processList.Count + ' processes.');
+        var enumr = new Enumerator(processList);
+        while (!enumr.atEnd()) {
+            enumr.item().Terminate();
+            enumr.moveNext();
+        }
+    },
+    
+    /**
+     * ë¡œì»¬ IPë¥¼ íšë“í•œë‹¤.
+     */
+    getLocalIP : function() {
+        var computer = '.';
+        var WMIService = GetObject("winmgmts:{impersonationLevel=impersonate}!\\\\" + computer + "\\root\\cimv2");
+        var netConfigSet = WMIService.ExecQuery("SELECT * FROM Win32_NetworkAdapterConfiguration");
+        var enumr = new Enumerator(netConfigSet);
+        while (!enumr.atEnd()) {
+            if (enumr.item().IPAddress != null) {
+                var ipAddresses = enumr.item().IPAddress.toArray();
+                for (k = 0; k < ipAddresses.length; k++) {
+                    return ipAddresses[k];
+                }
+            }
+            enumr.moveNext();
+        }
+    },
 
-	sleep : function(millsec) {
-		WScript.Sleep(millsec);
-	}
+    sleep : function(millsec) {
+        WScript.Sleep(millsec);
+    }
 }
 
 function StringBuffer() {
-	this.buffer = new Array();
-	
-	this.append = function(str) {
-		this.buffer[this.buffer.length] = str;
-		return this;
-	}
+    this.buffer = new Array();
+    
+    this.append = function(str) {
+        this.buffer[this.buffer.length] = str;
+        return this;
+    }
 
-	this.toString = function() {
-		return this.buffer.join("");
-	}
-	
-	this.clear = function() {
-		for (var i in this.buffer) {
-			delete this.buffer[i];
-		}
-	}
+    this.toString = function() {
+        return this.buffer.join("");
+    }
+    
+    this.clear = function() {
+        for (var i in this.buffer) {
+            delete this.buffer[i];
+        }
+    }
 
-	this.length = function() {
-		var len = 0;
-		for(var i = 0 ; i < this.buffer.length ; i++) {
-			if (this.buffer[i] != null)
-				len += this.buffer[i].length;
-		}
-		return len;
-	}
+    this.length = function() {
+        var len = 0;
+        for(var i = 0 ; i < this.buffer.length ; i++) {
+            if (this.buffer[i] != null)
+                len += this.buffer[i].length;
+        }
+        return len;
+    }
 
-	this.charAt = function(index) {
-		var idx = index;
-		for(var i = 0 ; i < this.buffer.length ; i++) {
-			if (this.buffer[i] != null) {
-				if (idx <= this.buffer[i].length - 1)
-					return String(this.buffer[i]).charAt(idx);
-				else
-					idx -= this.buffer[i].length;
-			}
-		}
-		return null;
-	}
+    this.charAt = function(index) {
+        var idx = index;
+        for(var i = 0 ; i < this.buffer.length ; i++) {
+            if (this.buffer[i] != null) {
+                if (idx <= this.buffer[i].length - 1)
+                    return String(this.buffer[i]).charAt(idx);
+                else
+                    idx -= this.buffer[i].length;
+            }
+        }
+        return null;
+    }
 
-	this.substring = function(start, end) {
-		var s = this.toString();
-		if (end != null && end > 0 && end > start)
-			return s.substring(start, end);
-		else
-			return s.substring(start);
-	}
+    this.substring = function(start, end) {
+        var s = this.toString();
+        if (end != null && end > 0 && end > start)
+            return s.substring(start, end);
+        else
+            return s.substring(start);
+    }
 }
 
 
 function HashMap()
 {
-	this.length = 0;
-	this.items = new Array();
+    this.length = 0;
+    this.items = new Array();
 
-	for (var i = 0; i < arguments.length; i += 2) {
-		if (typeof(arguments[i + 1]) != 'undefined') {
-			this.items[arguments[i]] = arguments[i + 1];
-			this.length++;
-		}
-	}
+    for (var i = 0; i < arguments.length; i += 2) {
+        if (typeof(arguments[i + 1]) != 'undefined') {
+            this.items[arguments[i]] = arguments[i + 1];
+            this.length++;
+        }
+    }
    
-	this.remove = function(key)
-	{
-		var tmp;
-		if (typeof(this.items[key]) != 'undefined') {
-			this.length--;
-			var tmp = this.items[key];
-			delete this.items[key];
-		}
-	   
-		return tmp;
-	}
+    this.remove = function(key)
+    {
+        var tmp;
+        if (typeof(this.items[key]) != 'undefined') {
+            this.length--;
+            var tmp = this.items[key];
+            delete this.items[key];
+        }
+       
+        return tmp;
+    }
 
-	this.get = function(key) {
-		return this.items[key];
-	}
+    this.get = function(key) {
+        return this.items[key];
+    }
 
-	this.put = function(key, value)
-	{
-		var tmp;
-		if (typeof(value) != 'undefined') {
-			if (typeof(this.items[key]) == 'undefined') {
-				this.length++;
-			}
-			else {
-				tmp = this.items[key];
-			}
+    this.put = function(key, value)
+    {
+        var tmp;
+        if (typeof(value) != 'undefined') {
+            if (typeof(this.items[key]) == 'undefined') {
+                this.length++;
+            }
+            else {
+                tmp = this.items[key];
+            }
 
-			this.items[key] = value;
-		}
-	   
-		return tmp;
-	}
+            this.items[key] = value;
+        }
+       
+        return tmp;
+    }
 
-	this.containsKey = function(key)
-	{
-		return typeof(this.items[key]) != 'undefined';
-	}
+    this.containsKey = function(key)
+    {
+        return typeof(this.items[key]) != 'undefined';
+    }
 
-	this.clear = function()
-	{
-		for (var i in this.items) {
-			delete this.items[i];
-		}
+    this.clear = function()
+    {
+        for (var i in this.items) {
+            delete this.items[i];
+        }
 
-		this.length = 0;
-	}
+        this.length = 0;
+    }
 }
 
 
 function Iterator(values) {
-	this.enums = new Enumerator(values);
-	this.enums.moveFirst();
+    this.enums = new Enumerator(values);
+    this.enums.moveFirst();
 
-	this.hasNext = function() {
-		return !this.enums.atEnd();
-	}
+    this.hasNext = function() {
+        return !this.enums.atEnd();
+    }
 
-	this.next = function() {
-		var value = this.enums.item();
-		this.enums.moveNext();
-		return value;
-	}
+    this.next = function() {
+        var value = this.enums.item();
+        this.enums.moveNext();
+        return value;
+    }
 }
 
 
 function Properties() {
-	this.load = function(filename) {
-		var fso = new ActiveXObject("Scripting.FileSystemObject");
+    this.load = function(filename) {
+        var fso = new ActiveXObject("Scripting.FileSystemObject");
 
-		var file = fso.OpenTextFile(filename, 1);
+        var file = fso.OpenTextFile(filename, 1);
 
-		while (!file.AtEndOfStream){
-			var line = file.ReadLine();
-			if (line != null && line.length > 0)
-			{
-				line = line.replace(/#.+$/g, "");
-				var p = line.indexOf("=");
-				if (p > - 1) {
-					var key = line.substring(0, p).trim();
-					var value = line.substring(p + 1, line.length).trim();
-					this.put(key, value);
-				}
-			}
-		}
-	}
+        while (!file.AtEndOfStream){
+            var line = file.ReadLine();
+            if (line != null && line.length > 0)
+            {
+                line = line.replace(/#.+$/g, "");
+                line = line.trim();
+                var p = line.indexOf("=");
+                if (p > - 1) {
+                    var key = line.substring(0, p).trim();
+                    var value = line.substring(p + 1, line.length).trim();
+                    this.put(key, value);
+                }
+            }
+        }
+    }
 }
 
-Properties.prototype = new HashMap();	//»ó¼Ó
+Properties.prototype = new HashMap();    //ìƒì†
 
 ///////////////////////////////////////////////////////////////////////////////
 /**
- * °ªÀ» ÀúÀåÇÏ´Â ¸®½ºÆ® °´Ã¼ÀÌ´Ù.
+ * ê°’ì„ ì €ì¥í•˜ëŠ” ë¦¬ìŠ¤íŠ¸ ê°ì²´ì´ë‹¤.
  * @author Eun Jeong-Ho, silver@intos.biz
  * @since 2004. 6. 4.
  */
 function List() {
-	this.table = new Array();
+    this.table = new Array();
 
-	/**
-	 * ¸®½ºÆ®À» ÃÊ±âÈ­ÇÑ´Ù.
-	 */
-	this.clear = function() {
-		for (var i in this.table) {
-			delete this.table[i];
-		}
-	}
+    /**
+     * ë¦¬ìŠ¤íŠ¸ì„ ì´ˆê¸°í™”í•œë‹¤.
+     */
+    this.clear = function() {
+        for (var i in this.table) {
+            delete this.table[i];
+        }
+    }
 
-	/**
-	 * ¿ä¼Ò¸¦ Ãß°¡ÇÑ´Ù.
-	 * @param o Ãß°¡ÇÒ ¿ä¼Ò
-	 */
-	this.add = function(idx, o) {
-		if (o == null) {
-			var o = idx;
-			this.table[this.table.length] = o;
-		} else {
-			this.table[idx] = o;
-		}
-	}
+    /**
+     * ìš”ì†Œë¥¼ ì¶”ê°€í•œë‹¤.
+     * @param o ì¶”ê°€í•  ìš”ì†Œ
+     */
+    this.add = function(idx, o) {
+        if (o == null) {
+            var o = idx;
+            this.table[this.table.length] = o;
+        } else {
+            this.table[idx] = o;
+        }
+    }
 
-	/**
-	 * ¿ä¼Ò¸¦ ±³Ã¼ÇÑ´Ù.
-	 * @param idx ÀÎµ¦½º
-	 * @param o Ãß°¡ÇÒ ¿ä¼Ò
-	 * @return Object ±âÁ¸¿¡ ÀúÀåµÈ ¿ä¼Ò
-	 */
-	this.set = function(idx, o) {
-		var oldval = this.table[idx];
-		this.table[idx] = o;
-		return oldval;
-	}
+    /**
+     * ìš”ì†Œë¥¼ êµì²´í•œë‹¤.
+     * @param idx ì¸ë±ìŠ¤
+     * @param o ì¶”ê°€í•  ìš”ì†Œ
+     * @return Object ê¸°ì¡´ì— ì €ì¥ëœ ìš”ì†Œ
+     */
+    this.set = function(idx, o) {
+        var oldval = this.table[idx];
+        this.table[idx] = o;
+        return oldval;
+    }
 
-	/**
-	 * ¿ä¼Ò¸¦ Æ÷ÇÔÇÏ°í ÀÖ´ÂÁö ¿©ºÎ¸¦ ¹İÈ¯ÇÑ´Ù.
-	 * @param o Å×½ºÆ®ÇÒ ¿ä¼Ò
-	 * @return true, false
-	 */
-	this.contains = function(o) {
-		for (var i = 0; i < this.table.length; i++) {
-			if (this.table[i] == o)
-				return true;
-		}
+    /**
+     * ìš”ì†Œë¥¼ í¬í•¨í•˜ê³  ìˆëŠ”ì§€ ì—¬ë¶€ë¥¼ ë°˜í™˜í•œë‹¤.
+     * @param o í…ŒìŠ¤íŠ¸í•  ìš”ì†Œ
+     * @return true, false
+     */
+    this.contains = function(o) {
+        for (var i = 0; i < this.table.length; i++) {
+            if (this.table[i] == o)
+                return true;
+        }
 
-		return false;
-	}
+        return false;
+    }
 
-	/**
-	 * ¸®½ºÆ®³»¿¡ ÀÎµ¦½º¿¡ ÀÖ´Â °´Ã¼¸¦ ¹İÈ¯ÇÑ´Ù.
-	 * @param idx ÀÎµ¦½º
-	 * @return °´Ã¼
-	 */
-	this.get = function(idx) {
-		return this.table[idx];	
-	}
+    /**
+     * ë¦¬ìŠ¤íŠ¸ë‚´ì— ì¸ë±ìŠ¤ì— ìˆëŠ” ê°ì²´ë¥¼ ë°˜í™˜í•œë‹¤.
+     * @param idx ì¸ë±ìŠ¤
+     * @return ê°ì²´
+     */
+    this.get = function(idx) {
+        return this.table[idx];    
+    }
 
-	/**
-	 * Ã£°íÀÚÇÏ´Â ¿ä¼ÒÀÇ ÀÎµ¦½º¹øÈ£¸¦ ¹İÈ¯ÇÏ´Ù. ¾ø´Ù¸é -1À» ¹İÈ¯ÇÑ´Ù.
-	 * @param o Ã£°íÀÚÇÏ´Â ¿ä¼Ò
-	 * @return ÀÎµ¦½º¹øÈ£ ¶Ç´Â -1
-	 */
-	this.indexOf = function(o) {
-		for (var i = 0; i < this.table.length; i++) {
-			if (this.table[i] == o)
-				return i;
-		}
+    /**
+     * ì°¾ê³ ìí•˜ëŠ” ìš”ì†Œì˜ ì¸ë±ìŠ¤ë²ˆí˜¸ë¥¼ ë°˜í™˜í•˜ë‹¤. ì—†ë‹¤ë©´ -1ì„ ë°˜í™˜í•œë‹¤.
+     * @param o ì°¾ê³ ìí•˜ëŠ” ìš”ì†Œ
+     * @return ì¸ë±ìŠ¤ë²ˆí˜¸ ë˜ëŠ” -1
+     */
+    this.indexOf = function(o) {
+        for (var i = 0; i < this.table.length; i++) {
+            if (this.table[i] == o)
+                return i;
+        }
 
-		return -1;
-	}
+        return -1;
+    }
 
-	/**
-	 * ¸®½ºÆ®³»¿¡ ¿ä¼Ò°¡ ÀÖ´ÂÁö ¿©ºÎ¸¦ ¹İÈ¯ÇÑ´Ù.
-	 * @returns true, false
-	 */
-	this.isEmpty = function() {
-		return (this.table.length == 0) ? true : false;
-	}
+    /**
+     * ë¦¬ìŠ¤íŠ¸ë‚´ì— ìš”ì†Œê°€ ìˆëŠ”ì§€ ì—¬ë¶€ë¥¼ ë°˜í™˜í•œë‹¤.
+     * @returns true, false
+     */
+    this.isEmpty = function() {
+        return (this.table.length == 0) ? true : false;
+    }
 
-	/**
-	 * ¸®½ºÆ®³»¿¡ »çÀÌÁî¸¦ ¹İÈ¯ÇÑ´Ù.
-	 * @returns »çÀÌÁî
-	 */
-	this.size = function() {
-		return this.table.length;
-	}
+    /**
+     * ë¦¬ìŠ¤íŠ¸ë‚´ì— ì‚¬ì´ì¦ˆë¥¼ ë°˜í™˜í•œë‹¤.
+     * @returns ì‚¬ì´ì¦ˆ
+     */
+    this.size = function() {
+        return this.table.length;
+    }
 
-	/**
-	 * ¸®½ºÆ®³»ÀÇ ÀÎµ¦½º¿¡ ÇØ´çÇÏ´Â ¿ä¼Ò¸¦ Áö¿î´Ù.
-	 * remove(idx)¿¡ ÇØ´çÇÏ¸ç
-	 * ¶Ç´Â ÀÎµ¦½º³»¿¡ °°Àº °´Ã¼¸¦ Ã£¾Æ¼­ Áö¿î´Ù.
-	 * remove(object)¿¡ ÇØ´çÇÑ´Ù.
-	 * ÀÌ°ÍÀÇ ÆÇ´Ü ±âÁØÀº ÆÄ¶ó¹ÌÅÍ idx°¡ number Å¸ÀÔÀÏ°æ¿ì´Â
-	 * ÀüÀÚ·Î ÆÇ´ÜÇÏ¿© Ã³¸®ÇÏ¸ç, ³ª¸ÓÁö°æ¿ì¿¡ ÈÄÀÚ·Î Ã³¸®µÈ´Ù.
-	 * @param idx ÀÎµ¦½º¹øÈ£ ¶Ç´Â °´Ã¼
-	 */
-	this.remove = function(idx) {
-		if (typeof(idx) == "number") {
-			var bit1 = this.table.splice(0, idx);
-			var bit2 = this.table.splice(idx + 1, this.table.length);
+    /**
+     * ë¦¬ìŠ¤íŠ¸ë‚´ì˜ ì¸ë±ìŠ¤ì— í•´ë‹¹í•˜ëŠ” ìš”ì†Œë¥¼ ì§€ìš´ë‹¤.
+     * remove(idx)ì— í•´ë‹¹í•˜ë©°
+     * ë˜ëŠ” ì¸ë±ìŠ¤ë‚´ì— ê°™ì€ ê°ì²´ë¥¼ ì°¾ì•„ì„œ ì§€ìš´ë‹¤.
+     * remove(object)ì— í•´ë‹¹í•œë‹¤.
+     * ì´ê²ƒì˜ íŒë‹¨ ê¸°ì¤€ì€ íŒŒë¼ë¯¸í„° idxê°€ number íƒ€ì…ì¼ê²½ìš°ëŠ”
+     * ì „ìë¡œ íŒë‹¨í•˜ì—¬ ì²˜ë¦¬í•˜ë©°, ë‚˜ë¨¸ì§€ê²½ìš°ì— í›„ìë¡œ ì²˜ë¦¬ëœë‹¤.
+     * @param idx ì¸ë±ìŠ¤ë²ˆí˜¸ ë˜ëŠ” ê°ì²´
+     */
+    this.remove = function(idx) {
+        if (typeof(idx) == "number") {
+            var bit1 = this.table.splice(0, idx);
+            var bit2 = this.table.splice(idx + 1, this.table.length);
 
-			this.table = bit1.concat(bit2);
-		} else {
-			var o = idx;
-			for (var i = 0; i < this.table.length; i++) {
-				if (this.table[i] == o)
-					this.remove(i);
-			}
-		}
-	}
+            this.table = bit1.concat(bit2);
+        } else {
+            var o = idx;
+            for (var i = 0; i < this.table.length; i++) {
+                if (this.table[i] == o)
+                    this.remove(i);
+            }
+        }
+    }
 
-	/**
-	 * ¸®½ºÆ®¾ÈÀÇ °ªÀ» ¹è¿­·Î ¹İÈ¯ÇÑ´Ù.
-	 * @returns Array of value
-	 */
-	this.toArray = function() {
-		return this.table.slice(0, this.table.length);
-	}
+    /**
+     * ë¦¬ìŠ¤íŠ¸ì•ˆì˜ ê°’ì„ ë°°ì—´ë¡œ ë°˜í™˜í•œë‹¤.
+     * @returns Array of value
+     */
+    this.toArray = function() {
+        return this.table.slice(0, this.table.length);
+    }
 
-	/**
-	 * ÁöÁ¤µÈ fromIndex¿Í toIndex »çÀÌÀÇ ÀÎµ¦½º¿¡ À§Ä¡ÇÑ 
-	 * °´Ã¼µéÀ» List ÇüÅÂ·Î ¹İÈ¯ÇÑ´Ù.
-	 * ´Ü, fromIndexÀÇ °´Ã¼´Â Æ÷ÇÔµÇÁö¸¸, toIndexÀÇ °´Ã¼´Â Æ÷ÇÔµÇ´Â ¾Ê´Â´Ù.
-	 * @param fromIndex ½ÃÀÛÀÎµ¦½º
-	 * @param toIndex ³¡ÀÎµ¦½º
-	 * @param List
-	 */
-	this.subList = function(fromIndex, toIndex) {
-		var list = new List();
-		for (var i = fromIndex; i < toIndex; i++) {
-			list.add(this.table[i]);
-		}
-		
-		return list;
-	}
+    /**
+     * ì§€ì •ëœ fromIndexì™€ toIndex ì‚¬ì´ì˜ ì¸ë±ìŠ¤ì— ìœ„ì¹˜í•œ 
+     * ê°ì²´ë“¤ì„ List í˜•íƒœë¡œ ë°˜í™˜í•œë‹¤.
+     * ë‹¨, fromIndexì˜ ê°ì²´ëŠ” í¬í•¨ë˜ì§€ë§Œ, toIndexì˜ ê°ì²´ëŠ” í¬í•¨ë˜ëŠ” ì•ŠëŠ”ë‹¤.
+     * @param fromIndex ì‹œì‘ì¸ë±ìŠ¤
+     * @param toIndex ëì¸ë±ìŠ¤
+     * @param List
+     */
+    this.subList = function(fromIndex, toIndex) {
+        var list = new List();
+        for (var i = fromIndex; i < toIndex; i++) {
+            list.add(this.table[i]);
+        }
+        
+        return list;
+    }
 
-	/**
-	 * °´Ã¼¸¦ Ç¥ÇöÇÏ´Â ¹®ÀÚ¿­À» ¹İÈ¯ÇÑ´Ù.
-	 * @return String Ç¥ÇöµÇ´Â ¹®ÀÚ¿­
-	 */
-	this.toString = function() {
-		var buf = new StringBuffer();
-		buf.append("{");
-		for (var i = 0; i < this.table.length - 1; i++) {
-			var val = this.table[i];
-			buf.append(val.toString()).append(",");
-		}
-		buf.append(this.table[this.table.length - 1]).append("}");
-		return buf.toString();
-	}
+    /**
+     * ê°ì²´ë¥¼ í‘œí˜„í•˜ëŠ” ë¬¸ìì—´ì„ ë°˜í™˜í•œë‹¤.
+     * @return String í‘œí˜„ë˜ëŠ” ë¬¸ìì—´
+     */
+    this.toString = function() {
+        var buf = new StringBuffer();
+        buf.append("{");
+        for (var i = 0; i < this.table.length - 1; i++) {
+            var val = this.table[i];
+            buf.append(val.toString()).append(",");
+        }
+        buf.append(this.table[this.table.length - 1]).append("}");
+        return buf.toString();
+    }
 }
 
 
 ///////////////////////////////////////////////////////////////////////////////
 /**
- * °ªÀ» ÀúÀåÇÏ´Â Å¥ °´Ã¼ÀÌ´Ù.
+ * ê°’ì„ ì €ì¥í•˜ëŠ” í ê°ì²´ì´ë‹¤.
  * @author Eun Jeong-Ho, silver@intos.biz
  * @since 2004. 6. 4.
  */
 function Queue() {
     /**
-	 * ¿ä¼Ò¸¦ Ãß°¡ÇÑ´Ù.
-	 * @param o Ãß°¡ÇÒ ¿ä¼Ò
-	 */
-	this.push = function(o) {
-		this.add(o);
-	}
+     * ìš”ì†Œë¥¼ ì¶”ê°€í•œë‹¤.
+     * @param o ì¶”ê°€í•  ìš”ì†Œ
+     */
+    this.push = function(o) {
+        this.add(o);
+    }
 
-	/**
-	 * ¿ä¼Ò¸¦ »©³½´Ù.
-	 * @return »©³½ ¿ä¼Ò
-	 */
-	this.pop = function() {
-		var val = this.get(0);
-		this.remove(0);
+    /**
+     * ìš”ì†Œë¥¼ ë¹¼ë‚¸ë‹¤.
+     * @return ë¹¼ë‚¸ ìš”ì†Œ
+     */
+    this.pop = function() {
+        var val = this.get(0);
+        this.remove(0);
 
-		return val;
-	}
+        return val;
+    }
 
-	/**
-	 * ¸ÇÀ§ ¿ä¼Ò¸¦ È®ÀÎÇÑ´Ù.
-	 * pop°ú ºñ½ÁÇÏÁö¸¸, ¿ä¼Ò¸¦ Áö¿ìÁö´Â ¾Ê´Â´Ù.
-	 * @return »©³½ ¿ä¼Ò
-	 */
-	this.peek = function() {
-		return this.get(0);
-	}
+    /**
+     * ë§¨ìœ„ ìš”ì†Œë¥¼ í™•ì¸í•œë‹¤.
+     * popê³¼ ë¹„ìŠ·í•˜ì§€ë§Œ, ìš”ì†Œë¥¼ ì§€ìš°ì§€ëŠ” ì•ŠëŠ”ë‹¤.
+     * @return ë¹¼ë‚¸ ìš”ì†Œ
+     */
+    this.peek = function() {
+        return this.get(0);
+    }
 }
 
-Queue.prototype = new List();	//»ó¼Ó
+Queue.prototype = new List();    //ìƒì†
 
 ///////////////////////////////////////////////////////////////////////////////
 /**
- * °ªÀ» ÀúÀåÇÏ´Â ½ºÅÃ °´Ã¼ÀÌ´Ù.
+ * ê°’ì„ ì €ì¥í•˜ëŠ” ìŠ¤íƒ ê°ì²´ì´ë‹¤.
  * @author Eun Jeong-Ho, silver@intos.biz
  * @since 2004. 6. 4.
  */
 function Stack() {
-	/**
-	 * ¿ä¼Ò¸¦ Ãß°¡ÇÑ´Ù.
-	 * @param o Ãß°¡ÇÒ ¿ä¼Ò
-	 */
-	this.push = function(o) {
-		this.add(o);
-	}
+    /**
+     * ìš”ì†Œë¥¼ ì¶”ê°€í•œë‹¤.
+     * @param o ì¶”ê°€í•  ìš”ì†Œ
+     */
+    this.push = function(o) {
+        this.add(o);
+    }
 
-	/**
-	 * ¿ä¼Ò¸¦ »©³½´Ù.
-	 * @return »©³½ ¿ä¼Ò
-	 */
-	this.pop = function() {
-		var idx = this.size() - 1;
-		var val = this.get(idx);
-		this.remove(idx);
+    /**
+     * ìš”ì†Œë¥¼ ë¹¼ë‚¸ë‹¤.
+     * @return ë¹¼ë‚¸ ìš”ì†Œ
+     */
+    this.pop = function() {
+        var idx = this.size() - 1;
+        var val = this.get(idx);
+        this.remove(idx);
 
-		return val;
-	}
+        return val;
+    }
 
-	/**
-	 * ¸ÇÀ§ ¿ä¼Ò¸¦ È®ÀÎÇÑ´Ù.
-	 * pop°ú ºñ½ÁÇÏÁö¸¸, ¿ä¼Ò¸¦ Áö¿ìÁö´Â ¾Ê´Â´Ù.
-	 * @return »©³½ ¿ä¼Ò
-	 */
-	this.peek = function() {
-		var idx = this.size() - 1;
-		return this.get(idx);
-	}
+    /**
+     * ë§¨ìœ„ ìš”ì†Œë¥¼ í™•ì¸í•œë‹¤.
+     * popê³¼ ë¹„ìŠ·í•˜ì§€ë§Œ, ìš”ì†Œë¥¼ ì§€ìš°ì§€ëŠ” ì•ŠëŠ”ë‹¤.
+     * @return ë¹¼ë‚¸ ìš”ì†Œ
+     */
+    this.peek = function() {
+        var idx = this.size() - 1;
+        return this.get(idx);
+    }
 }
 
-Stack.prototype = new List();	//»ó¼Ó
+Stack.prototype = new List();    //ìƒì†
 // http://msdn.microsoft.com/en-us/library/ms678086(VS.85).aspx
 
 function ODBC(dsnName, userId, password) {
-	this.conn = new ActiveXObject("ADODB.Connection");
+    this.conn = new ActiveXObject("ADODB.Connection");
 
-	this.dsn = dsnName;
-	this.id = userId;
-	this.pwd = password;
-	this.query = "DSN=" + this.dsn + ";UID=" + this.id + ";PWD=" + this.pwd;
+    this.dsn = dsnName;
+    this.id = userId;
+    this.pwd = password;
+    this.query = "DSN=" + this.dsn + ";UID=" + this.id + ";PWD=" + this.pwd;
 
-	this.dsnName = function() {
-		//Setter
-		if (arguments.length > 0) {
-			this.dsn = arguments[0];
-		} else {
-			//Getter
-			return this.dsn;
-		}
-	}
+    this.dsnName = function() {
+        //Setter
+        if (arguments.length > 0) {
+            this.dsn = arguments[0];
+        } else {
+            //Getter
+            return this.dsn;
+        }
+    }
 
-	this.userId = function() {
-		//Setter
-		if (arguments.length > 0) {
-			this.id = arguments[0];
-		} else {
-			//Getter
-			return this.id;
-		}
-	}
+    this.userId = function() {
+        //Setter
+        if (arguments.length > 0) {
+            this.id = arguments[0];
+        } else {
+            //Getter
+            return this.id;
+        }
+    }
 
-	this.password = function() {
-		//Setter
-		if (arguments.length > 0) {
-			this.pwd = arguments[0];
-		} else {
-			//Getter
-			return this.pwd;
-		}
-	}
+    this.password = function() {
+        //Setter
+        if (arguments.length > 0) {
+            this.pwd = arguments[0];
+        } else {
+            //Getter
+            return this.pwd;
+        }
+    }
 
-	this.connect = function() {
-		this.conn.Open(this.query);
-		return this;
-	}
+    this.connect = function() {
+        this.conn.Open(this.query);
+        return this;
+    }
 
-	this.execute = function(sql, hash) {
-		if (hash == null)
-			return new ResultSet(this.conn.Execute(sql));
-		else {
-			var pattern = /\$\{([a-zA-Z_][a-zA-Z0-9_\x5F]*)\}/g;
-			var query = sql;
-			var match;
-			while ((match = pattern.exec(query)) != null) {
-				var key = match[1];
-				var value = hash[key];
-				query = query.substring(0, match.index) + value + query.substring(match.lastIndex, query.length);
-			}
-			return new ResultSet(this.conn.Execute(query));
-		}
-	}
+    this.execute = function(sql, hash) {
+        if (hash == null)
+            return new ResultSet(this.conn.Execute(sql));
+        else {
+            var pattern = /\$\{([a-zA-Z_][a-zA-Z0-9_\x5F]*)\}/g;
+            var query = sql;
+            var match;
+            while ((match = pattern.exec(query)) != null) {
+                var key = match[1];
+                var value = hash[key];
+                query = query.substring(0, match.index) + value + query.substring(match.lastIndex, query.length);
+            }
+            return new ResultSet(this.conn.Execute(query));
+        }
+    }
 
-	this.close = function() {
-		if (this.conn != null)
-			this.conn.Close();
-	}
+    this.close = function() {
+        if (this.conn != null)
+            this.conn.Close();
+    }
 
-	function ResultSet(rs) {
-		this.rs = rs;
-		if (!this.rs.EOF) {
-			rs.MoveFirst();
-		}
+    function ResultSet(rs) {
+        this.rs = rs;
+        if (!this.rs.EOF) {
+            rs.MoveFirst();
+        }
 
-		this.isFirst = true;
+        this.isFirst = true;
 
-		this.close = function() {
-			if (this.rs != null)
-				this.rs.Close();
-		}
+        this.close = function() {
+            if (this.rs != null)
+                this.rs.Close();
+        }
 
-		this.next = function() {
-			if (this.isFirst)
-				this.isFirst = false;
-			else
-				this.rs.MoveNext();
-			return !this.rs.EOF;
-		}
-		
-		// ÄÃ·³¸í ¶Ç´Â ÀÎµ¦½º
-		this.get = this.value = this.getValue = function(nameOrIndex) {
-			return this.rs(nameOrIndex);
-		}
-	}
+        this.next = function() {
+            if (this.isFirst)
+                this.isFirst = false;
+            else
+                this.rs.MoveNext();
+            return !this.rs.EOF;
+        }
+        
+        // ì»¬ëŸ¼ëª… ë˜ëŠ” ì¸ë±ìŠ¤
+        this.get = this.value = this.getValue = function(nameOrIndex) {
+            return this.rs(nameOrIndex);
+        }
+    }
 }
 
 function FileSystem() {
-	this.fso = new ActiveXObject("Scripting.FileSystemObject");
+    this.fso = new ActiveXObject("Scripting.FileSystemObject");
 
-	this.dir = function(foldername) {
-		return new File(this.fso, this.fso.getfolder(foldername), true);
-	}
+    this.dir = function(foldername) {
+        return new File(this.fso, this.fso.GetFolder(foldername), true);
+    }
 
-	this.file = function(foldername) {
-		return new File(this.fso, this.fso.GetFile(foldername), false);
-	}
+    this.file = function(filename) {
+        return new File(this.fso, this.fso.GetFile(filename), false);
+    }
 
-	this.availableSpace = function(drivename) {	// µå¶óÀÌºêÀÇ °¡¿ë¿ë·®À» ¹İÈ¯ÇÑ´Ù. Ex) C: -> C
-		var drives = new Enumerator(this.fso.drives);
-		for (; !drives.atEnd(); drives.moveNext()) {
-			var drive = drives.item();
-			if (drive.IsReady && drive.DriveLetter == drivename) {
-				return drive.AvailableSpace;
-			}
-		}
+    this.exists = function(foldernameOrfilename) {
+        var isDirectory = false;
+        try {
+            var folder = this.fso.GetFolder(foldernameOrfilename);
+            isDirectory = true;
+        }
+        catch (e) {
+            isDirectory = false;
+        }
 
-		throw new Error("Not exists " + drivename + ".");
-	}
+        if (isDirectory)
+            return this.fso.FolderExists(foldernameOrfilename);
+        else
+            return this.fso.FileExists(foldernameOrfilename);    
+    }
 
-	this.getFSO = function() {
-		return this.fso;
-	}
+    this.availableSpace = function(drivename) {    // ë“œë¼ì´ë¸Œì˜ ê°€ìš©ìš©ëŸ‰ì„ ë°˜í™˜í•œë‹¤. Ex) C: -> C
+        var drives = new Enumerator(this.fso.drives);
+        for (; !drives.atEnd(); drives.moveNext()) {
+            var drive = drives.item();
+            if (drive.IsReady && drive.DriveLetter == drivename) {
+                return drive.AvailableSpace;
+            }
+        }
 
-	this.iterateFiles = function(foldername, func) {
-		var list = this.dir(foldername).list();
-		var enums = new Enumerator(list);
-		enums.moveFirst();
+        throw new Error("Not exists " + drivename + ".");
+    }
 
-		while (!enums.atEnd()) {
-			var file = enums.item();
-			if (file.isFile()) {
-				func(file);
-			} else { 
-				this.iterateFiles(file.path(), func);	
-			}
-			enums.moveNext();
-		}
-	}
+    this.getFSO = function() {
+        return this.fso;
+    }
 
-	this.iterateDirs = function(foldername, func) {
-		var list = this.dir(foldername).list();
-		var enums = new Enumerator(list);
-		enums.moveFirst();
+    this.iterateFiles = function(foldername, func) {
+        var list = this.dir(foldername).list();
+        var enums = new Enumerator(list);
+        enums.moveFirst();
 
-		while (!enums.atEnd()) {
-			var dir = enums.item();
-			if (dir.isDir()) {
-				func(dir);
-				this.iterateDirs(dir.path(), func);	
-			}
-			enums.moveNext();
-		}
-	}
+        while (!enums.atEnd()) {
+            var file = enums.item();
+            if (file.isFile()) {
+                func(file);
+            } else { 
+                this.iterateFiles(file.path(), func);    
+            }
+            enums.moveNext();
+        }
+    }
 
-	function File(fso, file, isDirectory) {
-		this.fso = fso;
-		this.file = file;
-		this.isDirectory = isDirectory;
-		
-		this.raw = function() {
-			return this.file;
-		}
-		
-		this.name = function() {
-			return this.file.Name;
-		}
+    this.iterateDirs = function(foldername, func) {
+        var list = this.dir(foldername).list();
+        var enums = new Enumerator(list);
+        enums.moveFirst();
 
-		this.path = function() {
-			return this.file.Path;
-		}
+        while (!enums.atEnd()) {
+            var dir = enums.item();
+            if (dir.isDir()) {
+                func(dir);
+                this.iterateDirs(dir.path(), func);    
+            }
+            enums.moveNext();
+        }
+    }
 
-		this.size = function() {
-			return this.file.Size;
-		}
+    function File(fso, file, isDirectory) {
+        this.fso = fso;
+        this.file = file;
+        this.isDirectory = isDirectory;
+        
+        this.raw = function() {
+            return this.file;
+        }
+        
+        this.name = function() {
+            return this.file.Name;
+        }
 
-		this.isDir = function() {
-			return this.isDirectory;
-		}
+        this.path = function() {
+            return this.file.Path;
+        }
 
-		this.isFile = function() {
-			return !this.isDirectory;
-		}
+        this.size = function() {
+            return this.file.Size;
+        }
 
-		this.files = function() {
-			var children = new Enumerator(this.file.files);
-			var files = new Array();
-			var i = 0;
-		    for (; !children.atEnd(); children.moveNext()) {
-				files[i++] = new File(this.fso, children.item(), false);
-			}
-			return files;
-		}
+        this.isDir = function() {
+            return this.isDirectory;
+        }
 
-		this.dirs = function() {
-			var children = new Enumerator(this.file.SubFolders);
-			var dirs = new Array();
-			var i = 0;
-		    for (; !children.atEnd(); children.moveNext()) {
-				dirs[i++] = new File(this.fso, children.item(), true);
-			}
-			return dirs;
-		}
-		
-		/**
-		 * ÆÄÀÏ ¹× µğ·ºÅä¸® ¸ñ·ÏÀ» ¹İÈ¯ÇÑ´Ù.
-		 * filter functionÀÌ ÁÖ¾îÁú °æ¿ì, ÁÖ¾îÁø ÀÌ¸§ ÇÊÅÍ¸µÀ» ÇÒ ¼ö ÀÖ´Ù.
-		 * @param filterfnc function(name) { return true; } ÇüÅÂ¸¦ ÃëÇÑ´Ù.
-		 * @return ¸ñ·Ï
-		 */
-		this.list = function(filterfnc) {
-			var children = new Enumerator(this.file.files);
-			var files = new Array();
-			var i = 0;
-		    for (; !children.atEnd(); children.moveNext()) {
-				if (filterfnc != null) { 
-					var name = children.item().name;
-					if (filterfnc(name))
-					{
-						files[i++] = new File(this.fso, children.item(), false);
-					}
-				} else {
-					files[i++] = new File(this.fso, children.item(), false);
-				}
-			}
+        this.isFile = function() {
+            return !this.isDirectory;
+        }
 
-			children = new Enumerator(this.file.SubFolders);
-			for (; !children.atEnd(); children.moveNext()) {
-				if (filterfnc != null) { 
-					var name = children.item().name;
-					if (filterfnc(name))
-					{
-						files[i++] = new File(this.fso, children.item(), true);
-					}
-				} else {
-					files[i++] = new File(this.fso, children.item(), true);
-				}
-			}
-			return files;
-		}
+        this.files = function() {
+            var children = new Enumerator(this.file.files);
+            var files = new Array();
+            var i = 0;
+            for (; !children.atEnd(); children.moveNext()) {
+                files[i++] = new File(this.fso, children.item(), false);
+            }
+            return files;
+        }
 
-		this.toString = function() {
-			return this.file.Path;
-		}
+        this.dirs = function() {
+            var children = new Enumerator(this.file.SubFolders);
+            var dirs = new Array();
+            var i = 0;
+            for (; !children.atEnd(); children.moveNext()) {
+                dirs[i++] = new File(this.fso, children.item(), true);
+            }
+            return dirs;
+        }
+        
+        /**
+         * íŒŒì¼ ë° ë””ë ‰í† ë¦¬ ëª©ë¡ì„ ë°˜í™˜í•œë‹¤.
+         * filter functionì´ ì£¼ì–´ì§ˆ ê²½ìš°, ì£¼ì–´ì§„ ì´ë¦„ í•„í„°ë§ì„ í•  ìˆ˜ ìˆë‹¤.
+         * @param filterfnc function(name) { return true; } í˜•íƒœë¥¼ ì·¨í•œë‹¤.
+         * @return ëª©ë¡
+         */
+        this.list = function(filterfnc) {
+            var children = new Enumerator(this.file.files);
+            var files = new Array();
+            var i = 0;
+            for (; !children.atEnd(); children.moveNext()) {
+                if (filterfnc != null) { 
+                    var name = children.item().name;
+                    if (filterfnc(name))
+                    {
+                        files[i++] = new File(this.fso, children.item(), false);
+                    }
+                } else {
+                    files[i++] = new File(this.fso, children.item(), false);
+                }
+            }
 
-		this.text = function() {
-			//Setter
-			if (arguments.length > 0) {
-				var ForReading = 1, ForWriting = 2, ForAppending = 8;
-				var TristateUseDefault = -2 /* System Default */, TristateTrue = -1 /* Unicode */, TristateFalse = 0 /* ASSCII */;
-				var ts = this.file.OpenAsTextStream(ForWriting, TristateUseDefault);
-				ts.WriteLine(arguments[0]);
-				ts.Close();
-			} else {
-				//Getter
-				var ForReading = 1, ForWriting = 2, ForAppending = 8;
-				var file = this.fso.OpenTextFile(this.file.Path, ForReading);
-				if (file.AtEndOfStream)
-					return "";
-				else
-					return file.ReadAll();
-			}
-		}
+            children = new Enumerator(this.file.SubFolders);
+            for (; !children.atEnd(); children.moveNext()) {
+                if (filterfnc != null) { 
+                    var name = children.item().name;
+                    if (filterfnc(name))
+                    {
+                        files[i++] = new File(this.fso, children.item(), true);
+                    }
+                } else {
+                    files[i++] = new File(this.fso, children.item(), true);
+                }
+            }
+            return files;
+        }
 
-		this.parent = function() {
-			return new File(this.fso, this.file.parentFolder, true);
-		}
+        this.toString = function() {
+            return this.file.Path;
+        }
 
-		this.remove = function(force) {
-			if (this.isDirectory)
-				this.fso.DeleteFolder(this.name);
-			else
-				this.file.Delete(force);
-		}
+        this.text = function() {
+            //Setter
+            if (arguments.length > 0) {
+                var ForReading = 1, ForWriting = 2, ForAppending = 8;
+                var TristateUseDefault = -2 /* System Default */, TristateTrue = -1 /* Unicode */, TristateFalse = 0 /* ASSCII */;
+                var ts = null;
+                if (arguments.length > 1)
+                    this.file.OpenAsTextStream(ForWriting, arguments[1]);
+                else
+                    this.file.OpenAsTextStream(ForWriting, TristateUseDefault);
+                ts.WriteLine(arguments[0]);
+                ts.Close();
+            } else {
+                //Getter
+                var ForReading = 1, ForWriting = 2, ForAppending = 8;
+                var file = this.fso.OpenTextFile(this.file.Path, ForReading);
+                if (file.AtEndOfStream)
+                    return "";
+                else
+                    return file.ReadAll();
+            }
+        }
 
-		this.move = function(tofilename) {
-			this.fso.Move(this.name);
-		}
+        this.textUTF8 = function() {
+            //Setter
+            if (arguments.length > 0) {
+                var fs = new ActiveXObject("ADODB.Stream");
+                fs.Type = 2; // Specify stream type
+                fs.Charset = "utf-8";
+                fs.Open();
+                fs.WriteText(arguments[0]);
+                fs.SaveToFile(this.file.Path ,2);
+            } else {
+                //Getter
+                var fs = new ActiveXObject("ADODB.Stream");
+                fs.Charset = "utf-8";
+                fs.Open();
+                fs.LoadFromFile(this.file.Path);
+                return fs.ReadText();
+            }
+        }
 
-		this.exists = function() {
-			if (this.isDirectory)
-				return this.fso.FolderExists(this.file.Path);
-			else
-				return this.fso.FileExists(this.file.Path);	
-		}
+        this.parent = function() {
+            return new File(this.fso, this.file.parentFolder, true);
+        }
 
-		this.createFile = function(name) {
-			this.fso.CreateTextFile(name, true);
-			var f = this.fso.GetFile(name);
-			return new File(this.fso, f, false);
-		}
-		
-		this.createDir = function(name) {
-			var f = this.fso.CreateFolder(name);
-			return new File(this.fso, f, true);
-		}
+        this.remove = function(force) {
+            if (this.isDirectory)
+                this.fso.DeleteFolder(this.name);
+            else
+                this.file.Delete(force);
+        }
+
+        this.move = function(tofilename) {
+            this.fso.Move(this.name);
+        }
+
+        this.createFile = function(name) {
+            this.fso.CreateTextFile(name, true);
+            var f = this.fso.GetFile(name);
+            return new File(this.fso, f, false);
+        }
+        
+        this.createDir = function(name) {
+            var f = this.fso.CreateFolder(name);
+            return new File(this.fso, f, true);
+        }
 
 
-		this.copy = function(targetfileanme) {
-			this.file.copy(targetfileanme);
-		}
-		
-		this.rename = function(fileanme) {
-			this.file.Rename(fileanme);
-		}
+        this.copy = function(targetfileanme) {
+            this.file.copy(targetfileanme);
+        }
+        
+        this.rename = function(fileanme) {
+            this.file.Rename(fileanme);
+        }
 
-		this.dateCreated = function() {
-			if (this.isDirectory) {
-				if (this.file.IsRootFolder)
-					throw new Error('This is Root folder.');	
-			}
-			return this.file.DateCreated;
-		}
+        this.dateCreated = function() {
+            if (this.isDirectory) {
+                if (this.file.IsRootFolder)
+                    throw new Error('This is Root folder.');    
+            }
+            return this.file.DateCreated;
+        }
 
-		this.dateLastAccessed = function() {
-			if (this.isDirectory) {
-				if (this.file.IsRootFolder)
-					throw new Error('This is Root folder.');	
-			}
-			return this.file.DateLastAccessed;				
-		}
+        this.dateLastAccessed = function() {
+            if (this.isDirectory) {
+                if (this.file.IsRootFolder)
+                    throw new Error('This is Root folder.');    
+            }
+            return this.file.DateLastAccessed;                
+        }
 
-		this.dateLastModified = function() {
-			if (this.isDirectory) {
-				if (this.file.IsRootFolder)
-					throw new Error('This is Root folder.');	
-			}
-			return this.file.DateLastModified;				
-		}
-	}
+        this.dateLastModified = function() {
+            if (this.isDirectory) {
+                if (this.file.IsRootFolder)
+                    throw new Error('This is Root folder.');    
+            }
+            return this.file.DateLastModified;                
+        }
+    }
 }
 
 var URL = {
 
-	encodeURL : function(str) {  
-				var str = str;  
-				 str = "".concat(str);  
-					
-				var s0, i, s, u;  
-				s0 = "";                // encoded str  
-				for (i = 0; i < str.length; i++){   // scan the source  
-					s = str.charAt(i);  
-					u = str.charCodeAt(i);          // get unicode of the char  
-					if (s == " "){s0 += "+";}       // SP should be converted to "+"  
-					else {  
-						if ( u == 0x2a || u == 0x2d || u == 0x2e || u == 0x5f || ((u >= 0x30) && (u <= 0x39)) || ((u >= 0x41) && (u <= 0x5a)) || ((u >= 0x61) && (u <= 0x7a))){       // check for escape  
-							s0 = s0 + s;            // don't escape  
-						}  
-						else {                  // escape  
-							if ((u >= 0x0) && (u <= 0x7f)){     // single byte format  
-								s = "0"+u.toString(16);  
-								s0 += "%"+ s.substr(s.length-2);  
-							}  
-							else if (u > 0x1fffff){     // quaternary byte format (extended)  
-								s0 += "%" + (oxf0 + ((u & 0x1c0000) >> 18)).toString(16);  
-								s0 += "%" + (0x80 + ((u & 0x3f000) >> 12)).toString(16);  
-								s0 += "%" + (0x80 + ((u & 0xfc0) >> 6)).toString(16);  
-								s0 += "%" + (0x80 + (u & 0x3f)).toString(16);  
-							}  
-							else if (u > 0x7ff){        // triple byte format  
-								s0 += "%" + (0xe0 + ((u & 0xf000) >> 12)).toString(16);  
-								s0 += "%" + (0x80 + ((u & 0xfc0) >> 6)).toString(16);  
-								s0 += "%" + (0x80 + (u & 0x3f)).toString(16);  
-							}  
-							else {                      // double byte format  
-								s0 += "%" + (0xc0 + ((u & 0x7c0) >> 6)).toString(16);  
-								s0 += "%" + (0x80 + (u & 0x3f)).toString(16);  
-							}  
-						}  
-					}  
-				}  
-				return s0;  
-			   
-			},  
-				
-			   
-			/*  Function Equivalent to java.net.URLDecoder.decode(String, "UTF-8")  
-				Copyright (C) 2002, Cresc Corp.  
-				Version: 1.0  
-			   
-			*/ 
-			   
-	decodeURL : function(str) {  
-				var s0, i, j, s, ss, u, n, f;  
-				s0 = "";                // decoded str  
-				for (i = 0; i < str.length; i++){   // scan the source str  
-					s = str.charAt(i);  
-					if (s == "+"){s0 += " ";}       // "+" should be changed to SP  
-					else {  
-						if (s != "%"){s0 += s;}     // add an unescaped char  
-						else{               // escape sequence decoding  
-							u = 0;          // unicode of the character  
-							f = 1;          // escape flag, zero means end of this sequence  
-							while (true) {  
-								ss = "";        // local str to parse as int  
-									for (j = 0; j < 2; j++ ) {  // get two maximum hex characters for parse  
-										sss = str.charAt(++i);  
-										if (((sss >= "0") && (sss <= "9")) || ((sss >= "a") && (sss <= "f"))  || ((sss >= "A") && (sss <= "F"))) {  
-											ss += sss;      // if hex, add the hex character  
-										} else {--i; break;}    // not a hex char., exit the loop  
-									}  
-								n = parseInt(ss, 16);           // parse the hex str as byte  
-								if (n <= 0x7f){u = n; f = 1;}   // single byte format  
-								if ((n >= 0xc0) && (n <= 0xdf)){u = n & 0x1f; f = 2;}   // double byte format  
-								if ((n >= 0xe0) && (n <= 0xef)){u = n & 0x0f; f = 3;}   // triple byte format  
-								if ((n >= 0xf0) && (n <= 0xf7)){u = n & 0x07; f = 4;}   // quaternary byte format (extended)  
-								if ((n >= 0x80) && (n <= 0xbf)){u = (u << 6) + (n & 0x3f); --f;}         // not a first, shift and add 6 lower bits  
-								if (f <= 1){break;}         // end of the utf byte sequence  
-								if (str.charAt(i + 1) == "%"){ i++ ;}                   // test for the next shift byte  
-								else {break;}                   // abnormal, format error  
-							}  
-						s0 += String.fromCharCode(u);           // add the escaped character  
-						}  
-					}  
-				}  
-				return s0;  
-			}  
+    encodeURL : function(str) {  
+                var str = str;  
+                 str = "".concat(str);  
+                    
+                var s0, i, s, u;  
+                s0 = "";                // encoded str  
+                for (i = 0; i < str.length; i++){   // scan the source  
+                    s = str.charAt(i);  
+                    u = str.charCodeAt(i);          // get unicode of the char  
+                    if (s == " "){s0 += "+";}       // SP should be converted to "+"  
+                    else {  
+                        if ( u == 0x2a || u == 0x2d || u == 0x2e || u == 0x5f || ((u >= 0x30) && (u <= 0x39)) || ((u >= 0x41) && (u <= 0x5a)) || ((u >= 0x61) && (u <= 0x7a))){       // check for escape  
+                            s0 = s0 + s;            // don't escape  
+                        }  
+                        else {                  // escape  
+                            if ((u >= 0x0) && (u <= 0x7f)){     // single byte format  
+                                s = "0"+u.toString(16);  
+                                s0 += "%"+ s.substr(s.length-2);  
+                            }  
+                            else if (u > 0x1fffff){     // quaternary byte format (extended)  
+                                s0 += "%" + (oxf0 + ((u & 0x1c0000) >> 18)).toString(16);  
+                                s0 += "%" + (0x80 + ((u & 0x3f000) >> 12)).toString(16);  
+                                s0 += "%" + (0x80 + ((u & 0xfc0) >> 6)).toString(16);  
+                                s0 += "%" + (0x80 + (u & 0x3f)).toString(16);  
+                            }  
+                            else if (u > 0x7ff){        // triple byte format  
+                                s0 += "%" + (0xe0 + ((u & 0xf000) >> 12)).toString(16);  
+                                s0 += "%" + (0x80 + ((u & 0xfc0) >> 6)).toString(16);  
+                                s0 += "%" + (0x80 + (u & 0x3f)).toString(16);  
+                            }  
+                            else {                      // double byte format  
+                                s0 += "%" + (0xc0 + ((u & 0x7c0) >> 6)).toString(16);  
+                                s0 += "%" + (0x80 + (u & 0x3f)).toString(16);  
+                            }  
+                        }  
+                    }  
+                }  
+                return s0;  
+               
+            },  
+                
+               
+            /*  Function Equivalent to java.net.URLDecoder.decode(String, "UTF-8")  
+                Copyright (C) 2002, Cresc Corp.  
+                Version: 1.0  
+               
+            */ 
+               
+    decodeURL : function(str) {  
+                var s0, i, j, s, ss, u, n, f;  
+                s0 = "";                // decoded str  
+                for (i = 0; i < str.length; i++){   // scan the source str  
+                    s = str.charAt(i);  
+                    if (s == "+"){s0 += " ";}       // "+" should be changed to SP  
+                    else {  
+                        if (s != "%"){s0 += s;}     // add an unescaped char  
+                        else{               // escape sequence decoding  
+                            u = 0;          // unicode of the character  
+                            f = 1;          // escape flag, zero means end of this sequence  
+                            while (true) {  
+                                ss = "";        // local str to parse as int  
+                                    for (j = 0; j < 2; j++ ) {  // get two maximum hex characters for parse  
+                                        sss = str.charAt(++i);  
+                                        if (((sss >= "0") && (sss <= "9")) || ((sss >= "a") && (sss <= "f"))  || ((sss >= "A") && (sss <= "F"))) {  
+                                            ss += sss;      // if hex, add the hex character  
+                                        } else {--i; break;}    // not a hex char., exit the loop  
+                                    }  
+                                n = parseInt(ss, 16);           // parse the hex str as byte  
+                                if (n <= 0x7f){u = n; f = 1;}   // single byte format  
+                                if ((n >= 0xc0) && (n <= 0xdf)){u = n & 0x1f; f = 2;}   // double byte format  
+                                if ((n >= 0xe0) && (n <= 0xef)){u = n & 0x0f; f = 3;}   // triple byte format  
+                                if ((n >= 0xf0) && (n <= 0xf7)){u = n & 0x07; f = 4;}   // quaternary byte format (extended)  
+                                if ((n >= 0x80) && (n <= 0xbf)){u = (u << 6) + (n & 0x3f); --f;}         // not a first, shift and add 6 lower bits  
+                                if (f <= 1){break;}         // end of the utf byte sequence  
+                                if (str.charAt(i + 1) == "%"){ i++ ;}                   // test for the next shift byte  
+                                else {break;}                   // abnormal, format error  
+                            }  
+                        s0 += String.fromCharCode(u);           // add the escaped character  
+                        }  
+                    }  
+                }  
+                return s0;  
+            }  
 }
 
 
 var Base64 = {
-	base64EncodeChars : "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/",
-	base64DecodeChars : new Array(
-					  -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
-					  -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
-					  -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 62, -1, -1, -1, 63,
-					  52, 53, 54, 55, 56, 57, 58, 59, 60, 61, -1, -1, -1, -1, -1, -1,
-					  -1, 0, 1, 2, 3,  4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14,
-					  15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, -1, -1, -1, -1, -1,
-					  -1, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40,
-					  41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, -1, -1, -1, -1, -1),
-	encode : function(str) {
-				var i, len, c1, c2, c3;
-				len = str.length;
-				i = 0;
-				var out = new StringBuffer();
+    base64EncodeChars : "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/",
+    base64DecodeChars : new Array(
+                      -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+                      -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+                      -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 62, -1, -1, -1, 63,
+                      52, 53, 54, 55, 56, 57, 58, 59, 60, 61, -1, -1, -1, -1, -1, -1,
+                      -1, 0, 1, 2, 3,  4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14,
+                      15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, -1, -1, -1, -1, -1,
+                      -1, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40,
+                      41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, -1, -1, -1, -1, -1),
+    encode : function(str) {
+                var i, len, c1, c2, c3;
+                len = str.length;
+                i = 0;
+                var out = new StringBuffer();
 
-				while(i < len) {
-					c1 = str.charCodeAt(i++) & 0xff;
-					if(i == len) {
-					   out.append(this.base64EncodeChars.charAt(c1 >> 2));
-					   out.append(this.base64EncodeChars.charAt((c1 & 0x3) << 4));
-					   out.append("==");
-					   break;
-					}
-					c2 = str.charCodeAt(i++);
-					if(i == len) {
-					   out.append(this.base64EncodeChars.charAt(c1 >> 2));
-					   out.append(this.base64EncodeChars.charAt(((c1 & 0x3)<< 4) | ((c2 & 0xF0) >> 4)));
-					   out.append(this.base64EncodeChars.charAt((c2 & 0xF) << 2));
-					   out.append("=");
-					   break;
-					}
-					c3 = str.charCodeAt(i++);
-					out.append(this.base64EncodeChars.charAt(c1 >> 2));
-					out.append(this.base64EncodeChars.charAt(((c1 & 0x3)<< 4) | ((c2 & 0xF0) >> 4)));
-					out.append(this.base64EncodeChars.charAt(((c2 & 0xF) << 2) | ((c3 & 0xC0) >>6)));
-					out.append(this.base64EncodeChars.charAt(c3 & 0x3F));
-				}
-				return out.toString();
-			},
+                while(i < len) {
+                    c1 = str.charCodeAt(i++) & 0xff;
+                    if(i == len) {
+                       out.append(this.base64EncodeChars.charAt(c1 >> 2));
+                       out.append(this.base64EncodeChars.charAt((c1 & 0x3) << 4));
+                       out.append("==");
+                       break;
+                    }
+                    c2 = str.charCodeAt(i++);
+                    if(i == len) {
+                       out.append(this.base64EncodeChars.charAt(c1 >> 2));
+                       out.append(this.base64EncodeChars.charAt(((c1 & 0x3)<< 4) | ((c2 & 0xF0) >> 4)));
+                       out.append(this.base64EncodeChars.charAt((c2 & 0xF) << 2));
+                       out.append("=");
+                       break;
+                    }
+                    c3 = str.charCodeAt(i++);
+                    out.append(this.base64EncodeChars.charAt(c1 >> 2));
+                    out.append(this.base64EncodeChars.charAt(((c1 & 0x3)<< 4) | ((c2 & 0xF0) >> 4)));
+                    out.append(this.base64EncodeChars.charAt(((c2 & 0xF) << 2) | ((c3 & 0xC0) >>6)));
+                    out.append(this.base64EncodeChars.charAt(c3 & 0x3F));
+                }
+                return out.toString();
+            },
 
-	decode : function(str) {
-				var c1, c2, c3, c4, i, len;
-				len = str.length;
-				i = 0;
-				var out = new StringBuffer();
-				
-				while(i < len) {
-					/* c1 */
-					do {
-					   c1 = this.base64DecodeChars[str.charCodeAt(i++) & 0xff];
-					} 
-					while(i < len && c1 == -1);
-					
-					if(c1 == -1)
-					   break;
-					
-					/* c2 */
-					do {
-					   c2 = this.base64DecodeChars[str.charCodeAt(i++) & 0xff];
-					}
-					while(i < len && c2 == -1);
-					
-					if(c2 == -1)
-					   break;
-					out.append(String.fromCharCode((c1 << 2) | ((c2 & 0x30) >> 4)));
-					
-					/* c3 */
-					do {
-						c3 = str.charCodeAt(i++) & 0xff;
-						if(c3 == 61)
-							return out;
-						c3 = this.base64DecodeChars[c3];
-					}
-					while(i < len && c3 == -1);
-					
-					if(c3 == -1)
-					   break;
-					out.append(String.fromCharCode(((c2 & 0XF) << 4) | ((c3 & 0x3C) >> 2)));
-					
-					/* c4 */
-					do {
-						c4 = str.charCodeAt(i++) & 0xff;
-						if(c4 == 61)
-							return out;
-					  c4 = this.base64DecodeChars[c4];
-					} 
-					while(i < len && c4 == -1);
-					
-					if(c4 == -1)
-					   break;
-					
-					out.append(String.fromCharCode(((c3 & 0x03) << 6) | c4));
-			  }
-			  return out.toString();
-			},
+    decode : function(str) {
+                var c1, c2, c3, c4, i, len;
+                len = str.length;
+                i = 0;
+                var out = new StringBuffer();
+                
+                while(i < len) {
+                    /* c1 */
+                    do {
+                       c1 = this.base64DecodeChars[str.charCodeAt(i++) & 0xff];
+                    } 
+                    while(i < len && c1 == -1);
+                    
+                    if(c1 == -1)
+                       break;
+                    
+                    /* c2 */
+                    do {
+                       c2 = this.base64DecodeChars[str.charCodeAt(i++) & 0xff];
+                    }
+                    while(i < len && c2 == -1);
+                    
+                    if(c2 == -1)
+                       break;
+                    out.append(String.fromCharCode((c1 << 2) | ((c2 & 0x30) >> 4)));
+                    
+                    /* c3 */
+                    do {
+                        c3 = str.charCodeAt(i++) & 0xff;
+                        if(c3 == 61)
+                            return out;
+                        c3 = this.base64DecodeChars[c3];
+                    }
+                    while(i < len && c3 == -1);
+                    
+                    if(c3 == -1)
+                       break;
+                    out.append(String.fromCharCode(((c2 & 0XF) << 4) | ((c3 & 0x3C) >> 2)));
+                    
+                    /* c4 */
+                    do {
+                        c4 = str.charCodeAt(i++) & 0xff;
+                        if(c4 == 61)
+                            return out;
+                      c4 = this.base64DecodeChars[c4];
+                    } 
+                    while(i < len && c4 == -1);
+                    
+                    if(c4 == -1)
+                       break;
+                    
+                    out.append(String.fromCharCode(((c3 & 0x03) << 6) | c4));
+              }
+              return out.toString();
+            },
 
-	utf16to8 : function(str) {
-				var i, len, c;
-				var out = new StringBuffer();
-				len = str.length;
-				for(i = 0; i < len; i++) 
-				{
-					c = str.charCodeAt(i);
-					if ((c >= 0x0001) && (c <= 0x007F)) 
-					{
-						out += str.charAt(i);
-					}
-					else if (c > 0x07FF) 
-					{
-						out.append(String.fromCharCode(0xE0 | ((c >> 12) & 0x0F)));
-						out.append(String.fromCharCode(0x80 | ((c >> 6) & 0x3F)));
-						out.append(String.fromCharCode(0x80 | ((c >> 0) & 0x3F)));
-					}
-					else 
-					{
-						out.append(String.fromCharCode(0xC0 | ((c >> 6) & 0x1F)));
-						out.append(String.fromCharCode(0x80 | ((c >> 0) & 0x3F)));
-					}
-				}
-				return out.toString();
-			},
+    utf16to8 : function(str) {
+                var i, len, c;
+                var out = new StringBuffer();
+                len = str.length;
+                for(i = 0; i < len; i++) 
+                {
+                    c = str.charCodeAt(i);
+                    if ((c >= 0x0001) && (c <= 0x007F)) 
+                    {
+                        out += str.charAt(i);
+                    }
+                    else if (c > 0x07FF) 
+                    {
+                        out.append(String.fromCharCode(0xE0 | ((c >> 12) & 0x0F)));
+                        out.append(String.fromCharCode(0x80 | ((c >> 6) & 0x3F)));
+                        out.append(String.fromCharCode(0x80 | ((c >> 0) & 0x3F)));
+                    }
+                    else 
+                    {
+                        out.append(String.fromCharCode(0xC0 | ((c >> 6) & 0x1F)));
+                        out.append(String.fromCharCode(0x80 | ((c >> 0) & 0x3F)));
+                    }
+                }
+                return out.toString();
+            },
 
-	utf8to16 : function(str) {
-				var i, len, c;
-				var char2, char3;
-				var out = new StringBuffer();
-				len = str.length;
-				i = 0;
-				while(i < len) 
-				{
-					c = str.charCodeAt(i++);
-					switch(c >> 4)
-					{
-						case 0: case 1: case 2: case 3: case 4: case 5: case 6: case 7:
-							// 0xxxxxxx
-							out.append(str.charAt(i-1));
-							break;
-						case 12: case 13:
-							// 110x xxxx  10xx xxxx
-							char2 = str.charCodeAt(i++);
-							out.append(String.fromCharCode(((c & 0x1F) << 6) | (char2 & 0x3F)));
-							break;
-						case 14:
-							// 1110 xxxx 10xx xxxx 10xx xxxx
-							char2 = str.charCodeAt(i++);
-							char3 = str.charCodeAt(i++);
-							out.append(String.fromCharCode(((c & 0x0F) << 12) |
-							((char2 & 0x3F) << 6) |
-							((char3 & 0x3F) << 0)));
-							break;
-					}
-				}
+    utf8to16 : function(str) {
+                var i, len, c;
+                var char2, char3;
+                var out = new StringBuffer();
+                len = str.length;
+                i = 0;
+                while(i < len) 
+                {
+                    c = str.charCodeAt(i++);
+                    switch(c >> 4)
+                    {
+                        case 0: case 1: case 2: case 3: case 4: case 5: case 6: case 7:
+                            // 0xxxxxxx
+                            out.append(str.charAt(i-1));
+                            break;
+                        case 12: case 13:
+                            // 110x xxxx  10xx xxxx
+                            char2 = str.charCodeAt(i++);
+                            out.append(String.fromCharCode(((c & 0x1F) << 6) | (char2 & 0x3F)));
+                            break;
+                        case 14:
+                            // 1110 xxxx 10xx xxxx 10xx xxxx
+                            char2 = str.charCodeAt(i++);
+                            char3 = str.charCodeAt(i++);
+                            out.append(String.fromCharCode(((c & 0x0F) << 12) |
+                            ((char2 & 0x3F) << 6) |
+                            ((char3 & 0x3F) << 0)));
+                            break;
+                    }
+                }
 
-				return out.toString();
-			}
+                return out.toString();
+            }
 }
 
-function Connection() {	// XMLHTTPÀ» ÀÌ¿ëÇÏ¿© ¼­¹öÅë½Å ±âº»ÀûÀ¸·Î ½ÌÅ©µ¿ÀÛÇÑ´Ù.
-	this.versions = [
+function Connection() {    // XMLHTTPì„ ì´ìš©í•˜ì—¬ ì„œë²„í†µì‹  ê¸°ë³¸ì ìœ¼ë¡œ ì‹±í¬ë™ì‘í•œë‹¤.
+    this.versions = [
              'Msxml2.XMLHTTP.5.0',
              'Msxml2.XMLHTTP.4.0',
              'Msxml2.XMLHTTP.3.0',
@@ -1491,809 +1526,809 @@ function Connection() {	// XMLHTTPÀ» ÀÌ¿ëÇÏ¿© ¼­¹öÅë½Å ±âº»ÀûÀ¸·Î ½ÌÅ©µ¿ÀÛÇÑ´Ù.
         ];
 
     this.xmlHttp = null;
-	for (var i = 0; i < this.versions.length; i++) {
-		try {
-			this.xmlHttp = new ActiveXObject(this.versions[i]);
-			break;
-		} catch (e) { }
-	}
+    for (var i = 0; i < this.versions.length; i++) {
+        try {
+            this.xmlHttp = new ActiveXObject(this.versions[i]);
+            break;
+        } catch (e) { }
+    }
 
-	if (this.xmlHttp == null)	
-		throw new Error('This sytem does not support XMLHttpRequest');
+    if (this.xmlHttp == null)    
+        throw new Error('This sytem does not support XMLHttpRequest');
 
-	this.async = false;	// Sync(false), Async(true)
-	this.success = false;
-	this.state = new State(this, this.xmlHttp);
+    this.async = false;    // Sync(false), Async(true)
+    this.success = false;
+    this.state = new State(this, this.xmlHttp);
 
-	/**
-	 * Åë½Å ¼º°ø¿©ºÎ¸¦ ¹İÈ¯ÇÑ´Ù.
-	 * @return  ¼º°ø¿©ºÎ
-	 */
-	this.isSuccess = function() {
-		return this.success;
-	};
-	
-	/**
-	 * Åë½ÅÀÇ ¸ğµå¸¦ Async·Î ¼³Á¤ÇÑ´Ù.
-	 * @param isAsync Async(true), Sync(false)
-	 */
-	this.setAsync = function(async) {
-		this.async = async;
-	};
+    /**
+     * í†µì‹  ì„±ê³µì—¬ë¶€ë¥¼ ë°˜í™˜í•œë‹¤.
+     * @return  ì„±ê³µì—¬ë¶€
+     */
+    this.isSuccess = function() {
+        return this.success;
+    };
+    
+    /**
+     * í†µì‹ ì˜ ëª¨ë“œë¥¼ Asyncë¡œ ì„¤ì •í•œë‹¤.
+     * @param isAsync Async(true), Sync(false)
+     */
+    this.setAsync = function(async) {
+        this.async = async;
+    };
 
-	/**
-	 * Åë½Å ¸ğµå¸¦ ¹İÈ¯ÇÑ´Ù.
-	 * @return Async(true), Sync(false)
-	 */ 
-	this.isAsync = function() {
-		return this.async;
-	};
+    /**
+     * í†µì‹  ëª¨ë“œë¥¼ ë°˜í™˜í•œë‹¤.
+     * @return Async(true), Sync(false)
+     */ 
+    this.isAsync = function() {
+        return this.async;
+    };
 
-	/**
-	 * ¼­¹ö·Î µ¥ÀÌÅÍ¼ÂÀ» Àü¼ÛÇÑ´Ù.
-	 * @param url Àü¼Û ´ë»ó URL
-	 * @param postdata POST·Î ³Ñ±æ µ¥ÀÌÅÍ (default: null)
-	 * @param content_type Content-Type (default: "application/x-www-form-urlencoded")
-	 *        "text/xml", "multipart/form-data"
-	 */
-	this.call = function(url, postdata, content_type) {
-		this.success = false;
-		this.xmlHttp.abort();
-		this.xmlHttp.onreadystatechange = this.state.onreadystatechange;
+    /**
+     * ì„œë²„ë¡œ ë°ì´í„°ì…‹ì„ ì „ì†¡í•œë‹¤.
+     * @param url ì „ì†¡ ëŒ€ìƒ URL
+     * @param postdata POSTë¡œ ë„˜ê¸¸ ë°ì´í„° (default: null)
+     * @param content_type Content-Type (default: "application/x-www-form-urlencoded")
+     *        "text/xml", "multipart/form-data"
+     */
+    this.call = function(url, postdata, content_type) {
+        this.success = false;
+        this.xmlHttp.abort();
+        this.xmlHttp.onreadystatechange = this.state.onreadystatechange;
 
-		if (postdata != null && typeof(postdata) != "string") {	// ¹®ÀÚ¿­ÀÌ ¾Æ´Ñ ¹è¿­ÀÌ¶ó¸é,
-			postdata = this.getURLData(postdata);
-		}
+        if (postdata != null && typeof(postdata) != "string") {    // ë¬¸ìì—´ì´ ì•„ë‹Œ ë°°ì—´ì´ë¼ë©´,
+            postdata = this.getURLData(postdata);
+        }
 
-		if (postdata != null && postdata.length > 0)
-			this.xmlHttp.open ("POST", url, this.async);
-		else
-			this.xmlHttp.open ("GET", url, this.async);
+        if (postdata != null && postdata.length > 0)
+            this.xmlHttp.open ("POST", url, this.async);
+        else
+            this.xmlHttp.open ("GET", url, this.async);
 
-		if (content_type == null || content_type.length <= 0)
-			content_type = "application/x-www-form-urlencoded";
-		this.xmlHttp.setRequestHeader("Content-Type", content_type);
-		
-		if (postdata != null && postdata.length > 0)
-			this.xmlHttp.send(postdata);
-		else
-			this.xmlHttp.send();
-	};
+        if (content_type == null || content_type.length <= 0)
+            content_type = "application/x-www-form-urlencoded";
+        this.xmlHttp.setRequestHeader("Content-Type", content_type);
+        
+        if (postdata != null && postdata.length > 0)
+            this.xmlHttp.send(postdata);
+        else
+            this.xmlHttp.send();
+    };
 
-	/**
-	 * ¿äÃ» Header¿¡ °ªÀ» ¼³Á¤ÇÑ´Ù.
-	 * @param key Å°
-	 * @param value °ª
-	 */
-	this.setRequestHeader = function(key, value) {
-		this.xmlHttp.setRequestHeader(key, value);
-	}
+    /**
+     * ìš”ì²­ Headerì— ê°’ì„ ì„¤ì •í•œë‹¤.
+     * @param key í‚¤
+     * @param value ê°’
+     */
+    this.setRequestHeader = function(key, value) {
+        this.xmlHttp.setRequestHeader(key, value);
+    }
 
-	/**
-	 * ÇöÀç Åë½ÅÀ» ´İ´Â´Ù.
-	 */
-	this.close = function() {
-		this.xmlHttp = null;
-		this.state = null;
-	};
+    /**
+     * í˜„ì¬ í†µì‹ ì„ ë‹«ëŠ”ë‹¤.
+     */
+    this.close = function() {
+        this.xmlHttp = null;
+        this.state = null;
+    };
 
-	/**
-	 * ÇöÀç Åë½ÅÀ» Áß´ÜÇÑ´Ù.
-	 */
-	this.abort = function() {
-		this.xmlHttp.abort();
-	};
+    /**
+     * í˜„ì¬ í†µì‹ ì„ ì¤‘ë‹¨í•œë‹¤.
+     */
+    this.abort = function() {
+        this.xmlHttp.abort();
+    };
 
-	/**
-	 * Åë½ÅÀÌ ¿Ï·áµÇ¾ú´ÂÁö ¿©ºÎ¸¦ ¹İÈ¯ÇÑ´Ù.
-	 * @return ¿Ï·á¿©ºÎ
-	 */
-	this.getLoaded = function() {
-		return this.xmlHttp.readyState == 4;
-	};
+    /**
+     * í†µì‹ ì´ ì™„ë£Œë˜ì—ˆëŠ”ì§€ ì—¬ë¶€ë¥¼ ë°˜í™˜í•œë‹¤.
+     * @return ì™„ë£Œì—¬ë¶€
+     */
+    this.getLoaded = function() {
+        return this.xmlHttp.readyState == 4;
+    };
 
-	/**
-	 * Åë½ÅÀÌ ÁøÇàÁßÀÎÁö ¿©ºÎ¸¦ ¹İÈ¯ÇÑ´Ù.
-	 * @return ÁøÇà¿©ºÎ
-	 */
-	this.getLoading = function() {
-		return this.xmlHttp.readyState < 4;
-	};
+    /**
+     * í†µì‹ ì´ ì§„í–‰ì¤‘ì¸ì§€ ì—¬ë¶€ë¥¼ ë°˜í™˜í•œë‹¤.
+     * @return ì§„í–‰ì—¬ë¶€
+     */
+    this.getLoading = function() {
+        return this.xmlHttp.readyState < 4;
+    };
 
-	/**
-	 * ÀÏ¹İ ÅØ½ºÆ®·Î °¡Á®¿Â´Ù.
-	 * @return ÀÏ¹İ ¹®ÀÚ¿­
-	 */
-	this.getText = function() {
-		return this.xmlHttp.responseText;
-	};
+    /**
+     * ì¼ë°˜ í…ìŠ¤íŠ¸ë¡œ ê°€ì ¸ì˜¨ë‹¤.
+     * @return ì¼ë°˜ ë¬¸ìì—´
+     */
+    this.getText = function() {
+        return this.xmlHttp.responseText;
+    };
 
-	/**
-	 * Åë½ÅÀ¸·Î È¹µæÇÑ XML DOCUMENT¸¦ ¹İÈ¯ÇÑ´Ù.
-	 * @return XMLDOCUMENT
-	 */
-	this.getXml = function() {
-		return this.xmlHttp.responseXML;
-	};
+    /**
+     * í†µì‹ ìœ¼ë¡œ íšë“í•œ XML DOCUMENTë¥¼ ë°˜í™˜í•œë‹¤.
+     * @return XMLDOCUMENT
+     */
+    this.getXml = function() {
+        return this.xmlHttp.responseXML;
+    };
 
-	/**
-	 * XMLHTTP Åë½Å °´Ã¼¸¦ ¹İÈ¯ÇÑ´Ù.
-	 * @return XMLHTTP
-	 */
-	this.getXmlHttp = function() {
-		return this.xmlHttp;
-	};
+    /**
+     * XMLHTTP í†µì‹  ê°ì²´ë¥¼ ë°˜í™˜í•œë‹¤.
+     * @return XMLHTTP
+     */
+    this.getXmlHttp = function() {
+        return this.xmlHttp;
+    };
 
-	/**
-	 * HTTP Åë½ÅÀÌ Á¤»óÀûÀ¸·Î ÀÌ·ç¾î Á³´ÂÁö ¿©ºÎ¸¦ ¹İÈ¯ÇÑ´Ù.
-	 * @return Á¤»ó Åë½Å ¿©ºÎ
-	 */
-	this.getError = function() {
-		return this.xmlHttp.status != 200;
-	};
+    /**
+     * HTTP í†µì‹ ì´ ì •ìƒì ìœ¼ë¡œ ì´ë£¨ì–´ ì¡ŒëŠ”ì§€ ì—¬ë¶€ë¥¼ ë°˜í™˜í•œë‹¤.
+     * @return ì •ìƒ í†µì‹  ì—¬ë¶€
+     */
+    this.getError = function() {
+        return this.xmlHttp.status != 200;
+    };
 
-	function State(conn, xmlHttp) {
-		this.onreadystatechange = function() {
-			if(xmlHttp.readyState == 4) {
-				if (xmlHttp.status == 200) {
-					conn.success = true;
-					if (conn.successMethod != null)
-						conn.successMethod();
-				} else {
-					conn.success = false;
-					if (conn.errorMethod != null)
-						conn.errorMethod();
-				}
-			} else if(xmlHttp.readyState == 1) {
-				//
-			} else {
-				//
-			}
-		}
-	};
+    function State(conn, xmlHttp) {
+        this.onreadystatechange = function() {
+            if(xmlHttp.readyState == 4) {
+                if (xmlHttp.status == 200) {
+                    conn.success = true;
+                    if (conn.successMethod != null)
+                        conn.successMethod();
+                } else {
+                    conn.success = false;
+                    if (conn.errorMethod != null)
+                        conn.errorMethod();
+                }
+            } else if(xmlHttp.readyState == 1) {
+                //
+            } else {
+                //
+            }
+        }
+    };
 
-	/**
-	 * Array ¸Ê °´Ã¼¿¡¼­ POST·Î ³Ñ±â±â À§ÇÑ ½ºÆ®¸µÀ» ¸¸µé±â À§ÇØ °ª°ú µ¥ÀÌÅÍ¸¦ »Ì¾Æ³½´Ù.
-	 * @param buffer StringBuffer
-	 * @param element input °´Ã¼
-	 * @param isLastElement ¸¶Áö¸· °´Ã¼ÀÎÁö ¿©ºÎ
-	 */
-	this.getURLData = function(arrays) {
-		var buf = new StringBuffer();
-		for (var key in arrays) {
-			var value = arrays[key];
-			buf.append(URL.encodeURL(key)).append("=").append(URL.encodeURL(value)); 
-			buf.append("&");
-		}
-		return buf.toString();
-	}
+    /**
+     * Array ë§µ ê°ì²´ì—ì„œ POSTë¡œ ë„˜ê¸°ê¸° ìœ„í•œ ìŠ¤íŠ¸ë§ì„ ë§Œë“¤ê¸° ìœ„í•´ ê°’ê³¼ ë°ì´í„°ë¥¼ ë½‘ì•„ë‚¸ë‹¤.
+     * @param buffer StringBuffer
+     * @param element input ê°ì²´
+     * @param isLastElement ë§ˆì§€ë§‰ ê°ì²´ì¸ì§€ ì—¬ë¶€
+     */
+    this.getURLData = function(arrays) {
+        var buf = new StringBuffer();
+        for (var key in arrays) {
+            var value = arrays[key];
+            buf.append(URL.encodeURL(key)).append("=").append(URL.encodeURL(value)); 
+            buf.append("&");
+        }
+        return buf.toString();
+    }
 }
 
 
 
 
 function Uploader() {
-	this.xmlhttp = new ActiveXObject("Msxml2.ServerXMLHTTP.3.0");
-	this.xmlhttp.setOption(0, 0);
-	this.xmlhttp.setOption(1, true);
+    this.xmlhttp = new ActiveXObject("Msxml2.ServerXMLHTTP.3.0");
+    this.xmlhttp.setOption(0, 0);
+    this.xmlhttp.setOption(1, true);
 
-	this.readBinaryFile = function(sPath) {
-		var stream = new ActiveXObject("ADODB.Stream");
-		stream.Type = 1;
-		stream.Open();
-		stream.LoadFromFile(sPath);
-		var readBinaryFile = stream.Read();
-		stream.Close();
-		delete stream;
-		return readBinaryFile;
-	}
+    this.readBinaryFile = function(sPath) {
+        var stream = new ActiveXObject("ADODB.Stream");
+        stream.Type = 1;
+        stream.Open();
+        stream.LoadFromFile(sPath);
+        var readBinaryFile = stream.Read();
+        stream.Close();
+        delete stream;
+        return readBinaryFile;
+    }
 
-	this._successFunc_ = null;
-	this._failFunc_ = null;
+    this._successFunc_ = null;
+    this._failFunc_ = null;
 
-	this.state = new State(this, this.xmlhttp);
+    this.state = new State(this, this.xmlhttp);
 
-	this.onreadystatechange = function() {
-		if(this.xmlhttp.readyState == 4) {
-			if (this.xmlhttp.status == 200) {
-				_successFunc_(this.xmlhttp);
-			} else {
-				_failFunc_(this.xmlhttp);
-			}
-		}
-	}
+    this.onreadystatechange = function() {
+        if(this.xmlhttp.readyState == 4) {
+            if (this.xmlhttp.status == 200) {
+                _successFunc_(this.xmlhttp);
+            } else {
+                _failFunc_(this.xmlhttp);
+            }
+        }
+    }
 
-	this.send = function(url, filepath, successFunc, failFunc) {
-		this._successFunc_ = successFunc;
-		this._failFunc_ = failFunc;
+    this.send = function(url, filepath, successFunc, failFunc) {
+        this._successFunc_ = successFunc;
+        this._failFunc_ = failFunc;
 
-		this.xmlhttp.onreadystatechange = this.state.onreadystatechange;
+        this.xmlhttp.onreadystatechange = this.state.onreadystatechange;
 
-		this.xmlhttp.open("POST",url,false);
-		this.xmlhttp.send(this.readBinaryFile(filepath));
-	}
+        this.xmlhttp.open("POST",url,false);
+        this.xmlhttp.send(this.readBinaryFile(filepath));
+    }
 
-	function State(obj, xmlhttp) {
-		this.onreadystatechange = function() {
-			if(xmlhttp.readyState == 4) {
-				if (xmlhttp.status == 200) {
-					if (obj._successFunc_ != null)
-						obj._successFunc_(xmlhttp);
-				} else {
-					if (obj._failFunc_ != null)
-						obj._failFunc_(xmlhttp);
-				}
-			} else if(xmlhttp.readyState == 1) {
-				//
-			} else {
-				//
-			}
-		}
-	};
+    function State(obj, xmlhttp) {
+        this.onreadystatechange = function() {
+            if(xmlhttp.readyState == 4) {
+                if (xmlhttp.status == 200) {
+                    if (obj._successFunc_ != null)
+                        obj._successFunc_(xmlhttp);
+                } else {
+                    if (obj._failFunc_ != null)
+                        obj._failFunc_(xmlhttp);
+                }
+            } else if(xmlhttp.readyState == 1) {
+                //
+            } else {
+                //
+            }
+        }
+    };
 }
 
 function Downloader() {
-	this.xmlhttp = new ActiveXObject("Msxml2.ServerXMLHTTP.3.0");
-	this.xmlhttp.setOption(0, 0);
-	this.xmlhttp.setOption(1, true);
+    this.xmlhttp = new ActiveXObject("Msxml2.ServerXMLHTTP.3.0");
+    this.xmlhttp.setOption(0, 0);
+    this.xmlhttp.setOption(1, true);
 
-	this.readBinaryStream = function(path, data) {
-		var stream = new ActiveXObject("ADODB.Stream");
-		stream.Type = 1;
-		stream.Open();
-		stream.Write(data);
-		stream.SaveToFile(path);
-		stream.Close();
-		delete stream;
-	}
+    this.readBinaryStream = function(path, data) {
+        var stream = new ActiveXObject("ADODB.Stream");
+        stream.Type = 1;
+        stream.Open();
+        stream.Write(data);
+        stream.SaveToFile(path);
+        stream.Close();
+        delete stream;
+    }
 
-	this._successFunc_ = null;
-	this._failFunc_ = null;
+    this._successFunc_ = null;
+    this._failFunc_ = null;
 
-	this.state = new State(this, this.xmlhttp);
+    this.state = new State(this, this.xmlhttp);
 
-	this.onreadystatechange = function() {
-		if(this.xmlhttp.readyState == 4) {
-			if (this.xmlhttp.status == 200) {
-				_successFunc_(this.xmlhttp);
-			} else {
-				_failFunc_(this.xmlhttp);
-			}
-		}
-	}
-	/**
-	 * ÇØ´ç URL·Î ºÎÅÍ ´Ù¿î·Îµå ÇÏ¿©, ÁÖ¾îÁø Path·Î ÀúÀåÇÑ´Ù.
-	 * [¿¹Á¦]
-	 * var downloader = new Downloader();
-	 * downloader.receive(url, path, function(xmlhttp) { }, function(xmlhttp) { WScript.Echo("ÆÄÀÏÀ» ´Ù¿î·ÎµåÇÒ ¼ö ¾ø½À´Ï´Ù.") });
-	 * @param url ´Ù¿î·ÎµåÇÒ URL
-	 * @param path ÀúÀåÇÒ Path
-	 * @param successFunc ¼º°ø½Ã È£ÃâÇÒ ÇÔ¼ö
-	 * @param failFunc ½ÇÆĞ½Ã È£ÃâÇÒ ÇÔ¼ö
-	 */
-	this.receive = function(url, path, successFunc, failFunc) {
-		this._successFunc_ = successFunc;
-		this._failFunc_ = failFunc;
+    this.onreadystatechange = function() {
+        if(this.xmlhttp.readyState == 4) {
+            if (this.xmlhttp.status == 200) {
+                _successFunc_(this.xmlhttp);
+            } else {
+                _failFunc_(this.xmlhttp);
+            }
+        }
+    }
+    /**
+     * í•´ë‹¹ URLë¡œ ë¶€í„° ë‹¤ìš´ë¡œë“œ í•˜ì—¬, ì£¼ì–´ì§„ Pathë¡œ ì €ì¥í•œë‹¤.
+     * [ì˜ˆì œ]
+     * var downloader = new Downloader();
+     * downloader.receive(url, path, function(xmlhttp) { }, function(xmlhttp) { WScript.Echo("íŒŒì¼ì„ ë‹¤ìš´ë¡œë“œí•  ìˆ˜ ì—†ìŠµë‹ˆë‹¤.") });
+     * @param url ë‹¤ìš´ë¡œë“œí•  URL
+     * @param path ì €ì¥í•  Path
+     * @param successFunc ì„±ê³µì‹œ í˜¸ì¶œí•  í•¨ìˆ˜
+     * @param failFunc ì‹¤íŒ¨ì‹œ í˜¸ì¶œí•  í•¨ìˆ˜
+     */
+    this.receive = function(url, path, successFunc, failFunc) {
+        this._successFunc_ = successFunc;
+        this._failFunc_ = failFunc;
 
-		this.xmlhttp.onreadystatechange = this.state.onreadystatechange;
+        this.xmlhttp.onreadystatechange = this.state.onreadystatechange;
 
-		this.xmlhttp.open("GET",url,false);
-		this.xmlhttp.send();
-		this.readBinaryStream(path, this.xmlhttp.responseBody);
-	}
+        this.xmlhttp.open("GET",url,false);
+        this.xmlhttp.send();
+        this.readBinaryStream(path, this.xmlhttp.responseBody);
+    }
 
-	function State(obj, xmlhttp) {
-		this.onreadystatechange = function() {
-			if(xmlhttp.readyState == 4) {
-				if (xmlhttp.status == 200) {
-					if (obj._successFunc_ != null)
-						obj._successFunc_(xmlhttp);
-				} else {
-					if (obj._failFunc_ != null)
-						obj._failFunc_(xmlhttp);
-				}
-			} else if(xmlhttp.readyState == 1) {
-				//
-			} else {
-				//
-			}
-		}
-	}
+    function State(obj, xmlhttp) {
+        this.onreadystatechange = function() {
+            if(xmlhttp.readyState == 4) {
+                if (xmlhttp.status == 200) {
+                    if (obj._successFunc_ != null)
+                        obj._successFunc_(xmlhttp);
+                } else {
+                    if (obj._failFunc_ != null)
+                        obj._failFunc_(xmlhttp);
+                }
+            } else if(xmlhttp.readyState == 1) {
+                //
+            } else {
+                //
+            }
+        }
+    }
 }
 
 ///////////////////////////////////////////////////////////////////////////////
 /**
- * ¼Ò¿ä ½Ã°£ ÃøÁ¤À» À§ÇÑ À¯Æ¿ Å¬·¡½ºÀÌ´Ù.
+ * ì†Œìš” ì‹œê°„ ì¸¡ì •ì„ ìœ„í•œ ìœ í‹¸ í´ë˜ìŠ¤ì´ë‹¤.
  * @author Eun Jeong-Ho, silver@intos.biz
  * @since 2004. 6. 4.
  */
 function StopWatch()
 {
     this._startTime = -1;
-	this._stopTime = -1;
+    this._stopTime = -1;
 
-	/**
-	 * ½Ã°£ ÃøÁ¤À» ½ÃÀÛÇÑ´Ù.
-	 */
-	this.start = function()
-	{
-		this._startTime = new Date().getTime();
-	}
+    /**
+     * ì‹œê°„ ì¸¡ì •ì„ ì‹œì‘í•œë‹¤.
+     */
+    this.start = function()
+    {
+        this._startTime = new Date().getTime();
+    }
 
-	/**
-	 * ½Ã°£ ÃøÁ¤À» Á¾·áÇÑ´Ù.
-	 */
-	this.stop = function()
-	{
-		this._stopTime = new Date().getTime();
-	}
+    /**
+     * ì‹œê°„ ì¸¡ì •ì„ ì¢…ë£Œí•œë‹¤.
+     */
+    this.stop = function()
+    {
+        this._stopTime = new Date().getTime();
+    }
 
-	/**
-	 * ½Ã°£ÃøÁ¤À» ¸®¼ÂÇÑ´Ù.
-	 */
-	this.reset = function()
-	{
-		this._startTime = -1;
-		this._stopTime = -1;
-	}
+    /**
+     * ì‹œê°„ì¸¡ì •ì„ ë¦¬ì…‹í•œë‹¤.
+     */
+    this.reset = function()
+    {
+        this._startTime = -1;
+        this._stopTime = -1;
+    }
 
-	/**
-	 * ¼Ò¿ä½Ã°£À» ¹İÈ¯ÇÑ´Ù.
-	 * @param ¼Ò¿ä½Ã°£
-	 */
-	this.getTime = function()
-	{
-		if (this._stopTime == -1)
-			return (new Date.getTime() - this._startTime);
-		else
-			return (this._stopTime - this._startTime);
-	}
+    /**
+     * ì†Œìš”ì‹œê°„ì„ ë°˜í™˜í•œë‹¤.
+     * @param ì†Œìš”ì‹œê°„
+     */
+    this.getTime = function()
+    {
+        if (this._stopTime == -1)
+            return (new Date.getTime() - this._startTime);
+        else
+            return (this._stopTime - this._startTime);
+    }
 
-	/**
-	 * °É¸®½Ã°£À» millisencods·Î °è»êÇÏ¿© ¹®ÀÚ¿­·Î ¹İÈ¯ÇÑ´Ù.
-	 * @param ¹®ÀÚ¿­
-	 */
-	this.toString = function()
-	{
-		var time = this.getTime();
-		var milliseconds = time;
+    /**
+     * ê±¸ë¦¬ì‹œê°„ì„ millisencodsë¡œ ê³„ì‚°í•˜ì—¬ ë¬¸ìì—´ë¡œ ë°˜í™˜í•œë‹¤.
+     * @param ë¬¸ìì—´
+     */
+    this.toString = function()
+    {
+        var time = this.getTime();
+        var milliseconds = time;
 
-		return milliseconds + "ms";
-	}
+        return milliseconds + "ms";
+    }
 
-	/**
-	 * °É¸®½Ã°£À» hour, minutes, seconds, milliseconds·Î °è»êÇÏ¿© ¹®ÀÚ¿­·Î ¹İÈ¯ÇÑ´Ù.
-	 * @param ¹®ÀÚ¿­
-	 */
-	this.getTimeString = function()
-	{
-		var HIM = 60 * 60 * 1000;
-		var MIM = 60 * 1000;
-		var hours;
-		var minutes;
-		var seconds;
-		var milliseconds;
-		var time = this.getTime();
-		hours = time / HIM;
-		time = time - (hours * HIM);
-		minutes = time / MIM;
-		time = time - (minutes * MIM);
-		seconds = time / 1000;
-		time = time - (seconds * 1000);
-		milliseconds = time;
+    /**
+     * ê±¸ë¦¬ì‹œê°„ì„ hour, minutes, seconds, millisecondsë¡œ ê³„ì‚°í•˜ì—¬ ë¬¸ìì—´ë¡œ ë°˜í™˜í•œë‹¤.
+     * @param ë¬¸ìì—´
+     */
+    this.getTimeString = function()
+    {
+        var HIM = 60 * 60 * 1000;
+        var MIM = 60 * 1000;
+        var hours;
+        var minutes;
+        var seconds;
+        var milliseconds;
+        var time = this.getTime();
+        hours = time / HIM;
+        time = time - (hours * HIM);
+        minutes = time / MIM;
+        time = time - (minutes * MIM);
+        seconds = time / 1000;
+        time = time - (seconds * 1000);
+        milliseconds = time;
 
-		return hours + "h:" + minutes + "m:" + seconds + "s:" + milliseconds + "ms";
-	}
+        return hours + "h:" + minutes + "m:" + seconds + "s:" + milliseconds + "ms";
+    }
 }
 
 ///////////////////////////////////////////////////////////////////////////////
 /**
- * ¼­¹ö¿¡ XML°ú °°Àº ÇüÅÂÀÇ Configuration Á¤º¸¸¦ °¡Á®¿Í »ç¿ëÇÑ´Ù.
- * config.xml ÇüÅÂ¿¡¼­ root ÅÂ±×´Â ¾Æ·¡¿Í °°ÀÌ config·Î ½Î¿©¾ß ÇÑ´Ù.
+ * ì„œë²„ì— XMLê³¼ ê°™ì€ í˜•íƒœì˜ Configuration ì •ë³´ë¥¼ ê°€ì ¸ì™€ ì‚¬ìš©í•œë‹¤.
+ * config.xml í˜•íƒœì—ì„œ root íƒœê·¸ëŠ” ì•„ë˜ì™€ ê°™ì´ configë¡œ ì‹¸ì—¬ì•¼ í•œë‹¤.
  * <config>
- *	  <logger>
- *		<regexp-text></regexp-text>
- *		<daemon-enable>true</daemon-enable>
- *		<trace-location>true</trace-location>
- *		<sql-trace-enable>true</sql-trace-enable>
- *	  </logger>
+ *      <logger>
+ *        <regexp-text></regexp-text>
+ *        <daemon-enable>true</daemon-enable>
+ *        <trace-location>true</trace-location>
+ *        <sql-trace-enable>true</sql-trace-enable>
+ *      </logger>
  * </config>
  *
- * »ç¿ë ¹æ¹ıÀº,
+ * ì‚¬ìš© ë°©ë²•ì€,
  * <script>
- *		var enable = Configuration.lookup("/logger").get("sql-trace-enable");
+ *        var enable = Configuration.lookup("/logger").get("sql-trace-enable");
  * </script>
  * @author Eun Jeong-Ho, silver@intos.biz
  * @since 2004. 6. 24.
  */
 function Configuration()
 {
-	if (Configuration._singleton != null)
+    if (Configuration._singleton != null)
         return Configuration._singleton;
 
-	Configuration._singleton = this;
+    Configuration._singleton = this;
 
 
-	this.filename;
+    this.filename;
 
     var fs = new FileSystem();
-	var file = fs.file(Configuration.filename);
-	this.refer = new XMLReferer(file.text());
-	
-	/**
-	 * °æ·Î¸¦ ¼³Á¤ÇÑ´Ù.
-	 * @param path °æ·Î ex) /fileserver/ip
-	 */
-	this.lookup = function(path) {
-		this.refer.lookup(path);		
-		return this;
-	};
+    var file = fs.file(Configuration.filename);
+    this.refer = new XMLReferer(file.text());
+    
+    /**
+     * ê²½ë¡œë¥¼ ì„¤ì •í•œë‹¤.
+     * @param path ê²½ë¡œ ex) /fileserver/ip
+     */
+    this.lookup = function(path) {
+        this.refer.lookup(path);        
+        return this;
+    };
 
-	/**
-	 * ¼³Á¤À» °¡Á®¿Â´Ù.
-	 * ¸¸¾à ¾ø´Â Å°°ªÀÌ³ª, ¿¡·¯ ¹ß»ı½Ã ±âº»°ªÀ» ¹İÈ¯ÇÑ´Ù.
-	 * @param name ¼Ó¼º Å°°ª
-	 * @param defaultvalue ±âº»°ª(default: "");
-	 */
-	this.get = function(name, defaultvalue) {
-		try {
-			this.refer.mark();
-			this.refer.lookup(name);
-			var value = this.refer.getText();
-			this.refer.unmark();
-			return value;
-		} catch(e) {
-			if (defaultvalue != null)
-				return defaultvalue;
-			else
-				return "";
-		}
-	}
+    /**
+     * ì„¤ì •ì„ ê°€ì ¸ì˜¨ë‹¤.
+     * ë§Œì•½ ì—†ëŠ” í‚¤ê°’ì´ë‚˜, ì—ëŸ¬ ë°œìƒì‹œ ê¸°ë³¸ê°’ì„ ë°˜í™˜í•œë‹¤.
+     * @param name ì†ì„± í‚¤ê°’
+     * @param defaultvalue ê¸°ë³¸ê°’(default: "");
+     */
+    this.get = function(name, defaultvalue) {
+        try {
+            this.refer.mark();
+            this.refer.lookup(name);
+            var value = this.refer.getText();
+            this.refer.unmark();
+            return value;
+        } catch(e) {
+            if (defaultvalue != null)
+                return defaultvalue;
+            else
+                return "";
+        }
+    }
 }
 
 /**
- * ÀÎ½ºÅÏ½º¸¦ °¡Á®¿Â´Ù.
+ * ì¸ìŠ¤í„´ìŠ¤ë¥¼ ê°€ì ¸ì˜¨ë‹¤.
  */
 Configuration.getInstance = function() {
     return new Configuration();
 }
 
 /**
- * ±âº»ÀûÀÎ config.xmlÀÌ ¾Æ´Ñ ´Ù¸¥ xmlÀ» »ç¿ë½Ã urlÀ» ¼³Á¤ÇÑ´Ù.
+ * ê¸°ë³¸ì ì¸ config.xmlì´ ì•„ë‹Œ ë‹¤ë¥¸ xmlì„ ì‚¬ìš©ì‹œ urlì„ ì„¤ì •í•œë‹¤.
  * @param url
  */
 Configuration.file = function(filename)
 {
-	Configuration.filename = filename;
+    Configuration.filename = filename;
 }///////////////////////////////////////////////////////////////////////////////
 /**
- * µ¥ÀÌÅÍ¼Â ¶Ç´Â XML ¹®¼­¸¦ XSLT¸¦ ÀÌ¿ëÇÏ¿© º¯È¯ ¹®¼­¸¦ ¾ò´Â´Ù.
- * (¿¹Á¦) new XMLTransformer().transform("datasetlist.xsl", resxml);
+ * ë°ì´í„°ì…‹ ë˜ëŠ” XML ë¬¸ì„œë¥¼ XSLTë¥¼ ì´ìš©í•˜ì—¬ ë³€í™˜ ë¬¸ì„œë¥¼ ì–»ëŠ”ë‹¤.
+ * (ì˜ˆì œ) new XMLTransformer().transform("datasetlist.xsl", resxml);
  * @author Eun Jeong-Ho, silver@intos.biz
  * @since 2004. 6. 4.
  */
 function XMLTransformer() {
-	this.getXMLDoc = function() {
-		var versions = [
+    this.getXMLDoc = function() {
+        var versions = [
              'Msxml2.DOMDocument.6.0',
-			 'Msxml2.DOMDocument.5.0',
+             'Msxml2.DOMDocument.5.0',
              'Msxml2.DOMDocument.4.0',
              'Msxml2.DOMDocument.3.0',
              'Msxml2.DOMDocument.2.0',
              'Msxml2.DOMDocument'            
         ];
 
-		xmldoc = null;
-		for (var i = 0; i < versions.length; i++) {
-			try {
-				xmldoc = new ActiveXObject(versions[i]);
-				break;
-			} catch (e) { }
-		}
-		return xmldoc;
-	}
+        xmldoc = null;
+        for (var i = 0; i < versions.length; i++) {
+            try {
+                xmldoc = new ActiveXObject(versions[i]);
+                break;
+            } catch (e) { }
+        }
+        return xmldoc;
+    }
 
     /**
-	 * xsl ¹®¼­°¡ ÀÖ´Â URL·Î ºÎÅÍ XSL¸¦ ÃëµæÇÏ¿©,
-	 * XML ¹®ÀÚ¿­ ¶Ç´Â DataSet °´Ã¼¸¦ À¶ÇÕÇÏ¿©,
-	 * ¿øÇÏ´Â ¹®¼­¸¦ ¸¸µé¾î ³½´Ù.
-	 * @param xslurl XSLT È­ÀÏ ÀÖ´Â URL
-	 * @param xmlstr XML ¹®ÀÚ¿­ ¶Ç´Â DataSet °´Ã¼
-	 * @return »ı¼ºµÈ ¹®¼­
-	 */
-	this.transform = function(xslurl, xmlstr) {
-		var stylesheet = null;
-		var xmldoc = null;
+     * xsl ë¬¸ì„œê°€ ìˆëŠ” URLë¡œ ë¶€í„° XSLë¥¼ ì·¨ë“í•˜ì—¬,
+     * XML ë¬¸ìì—´ ë˜ëŠ” DataSet ê°ì²´ë¥¼ ìœµí•©í•˜ì—¬,
+     * ì›í•˜ëŠ” ë¬¸ì„œë¥¼ ë§Œë“¤ì–´ ë‚¸ë‹¤.
+     * @param xslurl XSLT í™”ì¼ ìˆëŠ” URL
+     * @param xmlstr XML ë¬¸ìì—´ ë˜ëŠ” DataSet ê°ì²´
+     * @return ìƒì„±ëœ ë¬¸ì„œ
+     */
+    this.transform = function(xslurl, xmlstr) {
+        var stylesheet = null;
+        var xmldoc = null;
 
-		stylesheet = this.getXMLDoc();
-		stylesheet.async = false;
-		stylesheet.validateOnParse = false;
-		stylesheet.load(xslurl);
-		if (stylesheet.parseError.errorCode != 0)  {
-			throw new Error(0, "Parsing XSL Error: " + stylesheet.parseError.reason); 
-		}
+        stylesheet = this.getXMLDoc();
+        stylesheet.async = false;
+        stylesheet.validateOnParse = false;
+        stylesheet.load(xslurl);
+        if (stylesheet.parseError.errorCode != 0)  {
+            throw new Error(0, "Parsing XSL Error: " + stylesheet.parseError.reason); 
+        }
 
-		if (typeof(xmlstr) == "string" && xmlstr.length > 0) {
-			xmldoc = this.getXMLDoc();
-			xmldoc.async = false;
-			xmldoc.validateOnParse = false;
-			xmldoc.loadXML(xmlstr);
-			if (xmldoc.parseError.errorCode != 0)  {
-				throw new Error(0, "Parsing XSL Error: " + xmldoc.parseError.reason); 
-			}
-		}
+        if (typeof(xmlstr) == "string" && xmlstr.length > 0) {
+            xmldoc = this.getXMLDoc();
+            xmldoc.async = false;
+            xmldoc.validateOnParse = false;
+            xmldoc.loadXML(xmlstr);
+            if (xmldoc.parseError.errorCode != 0)  {
+                throw new Error(0, "Parsing XSL Error: " + xmldoc.parseError.reason); 
+            }
+        }
 
-		return xmldoc.transformNode(stylesheet);
-	}
+        return xmldoc.transformNode(stylesheet);
+    }
 }
 
 
 ///////////////////////////////////////////////////////////////////////////////
 /**
- * XML È­ÀÏ³»ÀÇ ³ëµå¿¡ ´ëÇÏ¿© XPath¸¦ ÀÌ¿ëÇÏ¿© Á¢±ÙÀ» ½±°Ô ÇÏ¿©,
- * ÀúÀåµÈ °ªÀ» ÀĞÀ» ¼ö ÀÖ´Â Helper Å¬·¡½ºÀÌ´Ù.
+ * XML í™”ì¼ë‚´ì˜ ë…¸ë“œì— ëŒ€í•˜ì—¬ XPathë¥¼ ì´ìš©í•˜ì—¬ ì ‘ê·¼ì„ ì‰½ê²Œ í•˜ì—¬,
+ * ì €ì¥ëœ ê°’ì„ ì½ì„ ìˆ˜ ìˆëŠ” Helper í´ë˜ìŠ¤ì´ë‹¤.
  * @author Eun Jeong-Ho, silver@intos.biz
  * @since 2004. 6. 4.
- * @param strxml XML ¹®ÀÚ¿­ ¶Ç´Â DOM °´Ã¼
+ * @param strxml XML ë¬¸ìì—´ ë˜ëŠ” DOM ê°ì²´
  */
 function XMLReferer(strXML)
 {
-	this.getXMLDoc = function() {
-		var versions = [
-			 'Msxml2.DOMDocument.6.0',
-			 'Msxml2.DOMDocument.5.0',
+    this.getXMLDoc = function() {
+        var versions = [
+             'Msxml2.DOMDocument.6.0',
+             'Msxml2.DOMDocument.5.0',
              'Msxml2.DOMDocument.4.0',
              'Msxml2.DOMDocument.3.0',
              'Msxml2.DOMDocument.2.0',
              'Msxml2.DOMDocument'            
         ];
 
-		xmldoc = null;
-		for (var i = 0; i < versions.length; i++) {
-			try {
-				xmldoc = new ActiveXObject(versions[i]);
-				break;
-			} catch (e) { }
-		}
-		return xmldoc;
-	}
-	
-	/**
-	 * XML ÆÄÀÏ·Î ºÎÅÍ ·ÎµåÇÑ´Ù.
-	 * @param filename 
-	 */
-	this.load = function(filename) {
-		this.xmlDoc.async = false;
-		this.xmlDoc.validateOnParse = false;
+        xmldoc = null;
+        for (var i = 0; i < versions.length; i++) {
+            try {
+                xmldoc = new ActiveXObject(versions[i]);
+                break;
+            } catch (e) { }
+        }
+        return xmldoc;
+    }
+    
+    /**
+     * XML íŒŒì¼ë¡œ ë¶€í„° ë¡œë“œí•œë‹¤.
+     * @param filename 
+     */
+    this.load = function(filename) {
+        this.xmlDoc.async = false;
+        this.xmlDoc.validateOnParse = false;
 
-		this.xmlDoc.load(filename);
-		
-		if (this.xmlDoc.parseError.errorCode != 0) {
-			throw new Error(0, "Parsing XSL Error: " + this.xmlDoc.parseError.reason); 
-		}
-		
-		this.init(this.xmlDoc.documentElement);
-		return this;
-	}
+        this.xmlDoc.load(filename);
+        
+        if (this.xmlDoc.parseError.errorCode != 0) {
+            throw new Error(0, "Parsing XSL Error: " + this.xmlDoc.parseError.reason); 
+        }
+        
+        this.init(this.xmlDoc.documentElement);
+        return this;
+    }
 
-	/**
-	 * XML ¹®ÀÚ¿­À» XML·Î ·ÎµåÇÑ´Ù.
-	 * @param strxml XML ¹®ÀÚ¿­
-	 */
-	this.setXML = function(strxml) {
-		this.xmlDoc.async = false;
-		this.xmlDoc.validateOnParse = false;
+    /**
+     * XML ë¬¸ìì—´ì„ XMLë¡œ ë¡œë“œí•œë‹¤.
+     * @param strxml XML ë¬¸ìì—´
+     */
+    this.setXML = function(strxml) {
+        this.xmlDoc.async = false;
+        this.xmlDoc.validateOnParse = false;
 
-		this.xmlDoc.loadXML(strxml);
-		
-		if (this.xmlDoc.parseError.errorCode != 0) {
-			throw new Error(0, "Parsing XSL Error: " + this.xmlDoc.parseError.reason); 
-		}
-		
-		this.init(this.xmlDoc.documentElement);
-	}
+        this.xmlDoc.loadXML(strxml);
+        
+        if (this.xmlDoc.parseError.errorCode != 0) {
+            throw new Error(0, "Parsing XSL Error: " + this.xmlDoc.parseError.reason); 
+        }
+        
+        this.init(this.xmlDoc.documentElement);
+    }
 
-	/**
-	 * DOCUMENT °´Ã¼¿¡ ´ëÇÏ¿© ÃÊ±âÈ­ ÀÛ¾÷À» ÇÑ´Ù.
-	 * @param documentElement
-	 */
-	this.init = function(documentElement) {
-		this._selectedNodeByLookup = documentElement.firstChild;
-		this._idx = 0;
-		this._markList = new Stack();
-	}
+    /**
+     * DOCUMENT ê°ì²´ì— ëŒ€í•˜ì—¬ ì´ˆê¸°í™” ì‘ì—…ì„ í•œë‹¤.
+     * @param documentElement
+     */
+    this.init = function(documentElement) {
+        this._selectedNodeByLookup = documentElement.firstChild;
+        this._idx = 0;
+        this._markList = new Stack();
+    }
 
     this.xmlDoc = this.getXMLDoc();
 
-	if (strXML != null)	{
-		if (typeof(strXML) == "string" && strXML.length > 0)
-			this.setXML(strXML);
-		else {
-			// DOM °´Ã¼ÀÏ¶§
-			this.xmlDoc = strXML;
-			this.init(this.xmlDoc.documentElement);
-		}
-			
-	}
+    if (strXML != null)    {
+        if (typeof(strXML) == "string" && strXML.length > 0)
+            this.setXML(strXML);
+        else {
+            // DOM ê°ì²´ì¼ë•Œ
+            this.xmlDoc = strXML;
+            this.init(this.xmlDoc.documentElement);
+        }
+            
+    }
 
-	this.setNamespaces = function(namespaces) {
-		this.xmlDoc.setProperty("SelectionNamespaces", namespaces);
-	}
+    this.setNamespaces = function(namespaces) {
+        this.xmlDoc.setProperty("SelectionNamespaces", namespaces);
+    }
 
-	/**
-	 * XML ¹®¼­³»¿¡¼­ ·çÇÁ³»ÀÇ ·çÇÁ¸¦ µ¹¸é¼­ °ªÀ» ÀĞ°íÀÚ ÇÒ¶§,
-	 * ·çÇÁµ¹±âÀü¿¡ ÀÌ ¸Ş¼Òµå¸¦ È£ÃâÇÏ¿© Àü ºÎ¸ğ ·çÇÁÀÇ À§Ä¡¸¦ ±â¾ï½ÃÅ²´Ù.
-	 */
-	this.mark = function() {
-		var info = new MarkInfo(this._selectedNodeListByLookup, this._selectedNodeByLookup, this._idx);
-		this._markList.push(info);
-	}
+    /**
+     * XML ë¬¸ì„œë‚´ì—ì„œ ë£¨í”„ë‚´ì˜ ë£¨í”„ë¥¼ ëŒë©´ì„œ ê°’ì„ ì½ê³ ì í• ë•Œ,
+     * ë£¨í”„ëŒê¸°ì „ì— ì´ ë©”ì†Œë“œë¥¼ í˜¸ì¶œí•˜ì—¬ ì „ ë¶€ëª¨ ë£¨í”„ì˜ ìœ„ì¹˜ë¥¼ ê¸°ì–µì‹œí‚¨ë‹¤.
+     */
+    this.mark = function() {
+        var info = new MarkInfo(this._selectedNodeListByLookup, this._selectedNodeByLookup, this._idx);
+        this._markList.push(info);
+    }
 
-	/**
-	 * <code>mark</code>·Î ±â¾ï½ÃÄÑµÎ¾ú´ø, ·çÇÁ¿¡¼­ ºüÁ®³ª¿Ã¶§,
-	 * ºÎ¸ğ ·çÇÁÀÇ À§Ä¡·Î º¹±ÍÇÑ´Ù.
-	 */
-	this.unmark = function() {
-		var info = this._markList.pop();
+    /**
+     * <code>mark</code>ë¡œ ê¸°ì–µì‹œì¼œë‘ì—ˆë˜, ë£¨í”„ì—ì„œ ë¹ ì ¸ë‚˜ì˜¬ë•Œ,
+     * ë¶€ëª¨ ë£¨í”„ì˜ ìœ„ì¹˜ë¡œ ë³µê·€í•œë‹¤.
+     */
+    this.unmark = function() {
+        var info = this._markList.pop();
 
-		this._selectedNodeListByLookup = info._nodelist;
-		this._selectedNodeByLookup = info._node;
-		this._idx = info._idx;
-	}
+        this._selectedNodeListByLookup = info._nodelist;
+        this._selectedNodeByLookup = info._node;
+        this._idx = info._idx;
+    }
 
-	/**
-	 * ÃÊ±âÈ­ ÇÑ´Ù. ´Ü ÀĞÀº Document¸¦ ÃÊ±âÈ­ ÇÏ´Â°ÍÀÌ ¾Æ´Ï¶ó, <code>lookup</code>À¸·Î
-	 * Ã£°í ÀÖ´ø Á¤º¸¸¦ ÃÊ±âÈ­ÇÑ´Ù.
-	 */
-	this.reset = function() {
-		this._markList.clear();
+    /**
+     * ì´ˆê¸°í™” í•œë‹¤. ë‹¨ ì½ì€ Documentë¥¼ ì´ˆê¸°í™” í•˜ëŠ”ê²ƒì´ ì•„ë‹ˆë¼, <code>lookup</code>ìœ¼ë¡œ
+     * ì°¾ê³  ìˆë˜ ì •ë³´ë¥¼ ì´ˆê¸°í™”í•œë‹¤.
+     */
+    this.reset = function() {
+        this._markList.clear();
 
-		this._selectedNodeListByLookup = null;
-		this._selectedNodeByLookup = this.xmlDoc.documentElement.firstChild;
-		this._idx = 0;
-	}
+        this._selectedNodeListByLookup = null;
+        this._selectedNodeByLookup = this.xmlDoc.documentElement.firstChild;
+        this._idx = 0;
+    }
 
-	/**
-	 * Ã£Àº ³ëµå ¸®½ºÆ®¿¡¼­ ´ÙÀ½ ·Îµå°¡ ÀÖ´ÂÁö ¿©ºÎ¸¦ ¹İÈ¯ÇÑ´Ù.
-	 * Âü°íÀûÀ¸·Î <code>ResultSet</code>ÀÇ <code>next</code>¿Í ºñ½ÁÇÑ´Ù.
-	 * @return Á¸Àç ¿©ºÎ
-	 */
-	this.next = function() {
-		if (this._selectedNodeListByLookup.length <= this._idx)
-			return false;
-		else {
-			this._selectedNodeByLookup = this._selectedNodeListByLookup.item(this._idx++);
-			return true;
-		}
-	}
+    /**
+     * ì°¾ì€ ë…¸ë“œ ë¦¬ìŠ¤íŠ¸ì—ì„œ ë‹¤ìŒ ë¡œë“œê°€ ìˆëŠ”ì§€ ì—¬ë¶€ë¥¼ ë°˜í™˜í•œë‹¤.
+     * ì°¸ê³ ì ìœ¼ë¡œ <code>ResultSet</code>ì˜ <code>next</code>ì™€ ë¹„ìŠ·í•œë‹¤.
+     * @return ì¡´ì¬ ì—¬ë¶€
+     */
+    this.next = function() {
+        if (this._selectedNodeListByLookup.length <= this._idx)
+            return false;
+        else {
+            this._selectedNodeByLookup = this._selectedNodeListByLookup.item(this._idx++);
+            return true;
+        }
+    }
 
-	/**
-	 * Xpath¸¦ ÀÌ¿ëÇÏ¿© Ã£°íÀÚ ÇÏ´Â ·ÎµåÀÇ À§Ä¡¸¦ ¼³Á¤ÇÑ´Ù.
-	 * ´Ü, XpathÀÇ ÆĞ½ºÁß '//'¿Í °°Àº ÆĞ½º Á¤º¸´Â ÁÖÀÇ¸¦ ÇÏ¿©¾ß ÇÑ´Ù.
-	 * @param xpath ÆĞ½ºÁ¤º¸
-	 * @return XMLReferer ÇØ´ç ÆĞ½ºÁ¤º¸°¡ Á¸ÀçÇÏÁö ¾Ê´Â´Ù¸é, nullÀ» ¹İÈ¯ÇÑ´Ù.
-	 */
-	this.lookup = function(xpath) {
-		var nodelist = this._selectedNodeByLookup.selectNodes(xpath);
-		if (nodelist.length > 0) {
-			this._selectedNodeListByLookup = nodelist;
-			this._idx = 0;
-			this._selectedNodeByLookup = this._selectedNodeListByLookup.item(this._idx);
-			return this;
-		}
+    /**
+     * Xpathë¥¼ ì´ìš©í•˜ì—¬ ì°¾ê³ ì í•˜ëŠ” ë¡œë“œì˜ ìœ„ì¹˜ë¥¼ ì„¤ì •í•œë‹¤.
+     * ë‹¨, Xpathì˜ íŒ¨ìŠ¤ì¤‘ '//'ì™€ ê°™ì€ íŒ¨ìŠ¤ ì •ë³´ëŠ” ì£¼ì˜ë¥¼ í•˜ì—¬ì•¼ í•œë‹¤.
+     * @param xpath íŒ¨ìŠ¤ì •ë³´
+     * @return XMLReferer í•´ë‹¹ íŒ¨ìŠ¤ì •ë³´ê°€ ì¡´ì¬í•˜ì§€ ì•ŠëŠ”ë‹¤ë©´, nullì„ ë°˜í™˜í•œë‹¤.
+     */
+    this.lookup = function(xpath) {
+        var nodelist = this._selectedNodeByLookup.selectNodes(xpath);
+        if (nodelist.length > 0) {
+            this._selectedNodeListByLookup = nodelist;
+            this._idx = 0;
+            this._selectedNodeByLookup = this._selectedNodeListByLookup.item(this._idx);
+            return this;
+        }
 
-		return null;
-	}
+        return null;
+    }
 
-	/**
-	 * ÇöÀç ¼±ÅÃµÈ ³ëµå¸¦ ¹İÈ¯ÇÑ´Ù.
-	 * @return Node
-	 */
-	this.getSelectedNode = function() {
-		return this._selectedNodeByLookup;
-	}
+    /**
+     * í˜„ì¬ ì„ íƒëœ ë…¸ë“œë¥¼ ë°˜í™˜í•œë‹¤.
+     * @return Node
+     */
+    this.getSelectedNode = function() {
+        return this._selectedNodeByLookup;
+    }
 
-	/**
-	 * ÇØ´ç ³ëµå°¡ Element ÀÎÁö ¿©ºÎ¸¦ ÆÇº°ÇÏ¿© ¾Æ´Ò°æ¿ì,
-	 * ExceptionÀ» ¹İÈ¯ÇÑ´Ù.
-	 *
-	 * @param node ´ë»ó ³ëµå
-	 */
-	this.isElement = function(node) {
-		//if (node.nodeTypeString != "element")	// 1: NODE_ELEMENT 
-		if (node.nodeType != 1) {	// 1: NODE_ELEMENT 
-			throw new Error(0, "'"+node.nodeName + "' is not Element.");
-		}
-	}
+    /**
+     * í•´ë‹¹ ë…¸ë“œê°€ Element ì¸ì§€ ì—¬ë¶€ë¥¼ íŒë³„í•˜ì—¬ ì•„ë‹ê²½ìš°,
+     * Exceptionì„ ë°˜í™˜í•œë‹¤.
+     *
+     * @param node ëŒ€ìƒ ë…¸ë“œ
+     */
+    this.isElement = function(node) {
+        //if (node.nodeTypeString != "element")    // 1: NODE_ELEMENT 
+        if (node.nodeType != 1) {    // 1: NODE_ELEMENT 
+            throw new Error(0, "'"+node.nodeName + "' is not Element.");
+        }
+    }
 
-	/**
-	 * ÇöÀç ¼±ÅÃµÈ ³ëµåÀÇ ÇØ´ç ¼Ó¼ºÀÇ °ªÀ» ¹İÈ¯ÇÑ´Ù.
-	 * Ã£´Â ¼Ó¼º°¡ ¾øÀ» °æ¿ì ±âº»°ªÀ» ¹İÇÑÈ¯´Ù.
-	 * @param attrName Ã£´Â ¼Ó¼º¸í
-	 * @param defaultvalue ±âº»°ª(Default: "")
-	 * @return String ¼Ó¼º°ª
-	 */
-	this.attribute = this.getString = function(attrName, defaultvalue) {
-		if (defaultvalue == null || defaultvalue.length <= 0)
-			defaultvalue = "";
-		
-		var tmpNode = this.getSelectedNode();
+    /**
+     * í˜„ì¬ ì„ íƒëœ ë…¸ë“œì˜ í•´ë‹¹ ì†ì„±ì˜ ê°’ì„ ë°˜í™˜í•œë‹¤.
+     * ì°¾ëŠ” ì†ì„±ê°€ ì—†ì„ ê²½ìš° ê¸°ë³¸ê°’ì„ ë°˜í•œí™˜ë‹¤.
+     * @param attrName ì°¾ëŠ” ì†ì„±ëª…
+     * @param defaultvalue ê¸°ë³¸ê°’(Default: "")
+     * @return String ì†ì„±ê°’
+     */
+    this.attribute = this.getString = function(attrName, defaultvalue) {
+        if (defaultvalue == null || defaultvalue.length <= 0)
+            defaultvalue = "";
+        
+        var tmpNode = this.getSelectedNode();
 
-		if (tmpNode.nodeType == 2)	// 2: NODE_ATTRIBUTE
-			return tmpNode.nodeValue;
+        if (tmpNode.nodeType == 2)    // 2: NODE_ATTRIBUTE
+            return tmpNode.nodeValue;
 
-		this.isElement(tmpNode);
+        this.isElement(tmpNode);
 
-		var atts = tmpNode.attributes;
+        var atts = tmpNode.attributes;
 
-		for (var i = 0; i < atts.length; i++) {
-			var att = atts[i];
+        for (var i = 0; i < atts.length; i++) {
+            var att = atts[i];
 
-			if (att.nodeName == attrName)
-				return att.nodeValue;
-		}
+            if (att.nodeName == attrName)
+                return att.nodeValue;
+        }
 
-		return defaultvalue;
-	}
+        return defaultvalue;
+    }
 
-	/**
-	 * ÇöÀç ¼±ÅÃµÈ ³ëµåÀÇ ÇØ´ç ÅØ½ºÆ®ÀÇ °ªÀ» ¹İÈ¯ÇÑ´Ù.
-	 * Ã£´Â ³ëµå°¡ ¾øÀ» °æ¿ì ±âº»°ªÀ» ¹İÇÑÈ¯´Ù.
-	 * @param defaultvalue ±âº»°ª(defalut: "")
-	 * @return String ÅØ½ºÆ®
-	 */
-	this.value = this.cdata = this.getText = function(defaultvalue)
-	{
-		if (defaultvalue == null || defaultvalue.length <= 0)
-			defaultvalue = "";
+    /**
+     * í˜„ì¬ ì„ íƒëœ ë…¸ë“œì˜ í•´ë‹¹ í…ìŠ¤íŠ¸ì˜ ê°’ì„ ë°˜í™˜í•œë‹¤.
+     * ì°¾ëŠ” ë…¸ë“œê°€ ì—†ì„ ê²½ìš° ê¸°ë³¸ê°’ì„ ë°˜í•œí™˜ë‹¤.
+     * @param defaultvalue ê¸°ë³¸ê°’(defalut: "")
+     * @return String í…ìŠ¤íŠ¸
+     */
+    this.value = this.cdata = this.getText = function(defaultvalue)
+    {
+        if (defaultvalue == null || defaultvalue.length <= 0)
+            defaultvalue = "";
 
-		var tmpNode = this.getSelectedNode();
+        var tmpNode = this.getSelectedNode();
 
-		if (tmpNode.nodeType == 3)	// NODE_TEXT (3)
-			return tmpNode.nodeValue;
+        if (tmpNode.nodeType == 3)    // NODE_TEXT (3)
+            return tmpNode.nodeValue;
 
-		this.isElement(tmpNode);
+        this.isElement(tmpNode);
 
-		var list = tmpNode.childNodes;
-		for (var i = 0; i < list.length; i++) {
-			var child = list.item(i);
+        var list = tmpNode.childNodes;
+        for (var i = 0; i < list.length; i++) {
+            var child = list.item(i);
 
-			switch (child.nodeType) {
-				case 3 :	// NODE_TEXT (3)
-				case 4 :	// NODE_CDATA_SECTION (4)
-					var value = child.data.trim();
-					if ("" == value && i < list.length - 1)
-						continue;
-					else
-						return value;
-			}
-		}
+            switch (child.nodeType) {
+                case 3 :    // NODE_TEXT (3)
+                case 4 :    // NODE_CDATA_SECTION (4)
+                    var value = child.data.trim();
+                    if ("" == value && i < list.length - 1)
+                        continue;
+                    else
+                        return value;
+            }
+        }
 
-		return defaultvalue;
-	}
+        return defaultvalue;
+    }
 
-	/**
-	 * ÇöÀç ¼±ÅÃµÈ °°Àº ÆĞ½º³»¿¡ ÀÖ´Â ³ëµåÀÇ ¼ö¸¦ ¹İÈ¯ÇÑ´Ù.
-	 * ¸¸¾à¿¡ <code>lookup</code>À¸·Î ¼±ÅÃµÇ¾î ÀÖÁö ¾Ê´Ù¸é -1À» ¹İÈ¯ÇÑ´Ù.
-	 * @return int ¹İÈ¯°¹¼ö ¼±ÅÃµÇÁö ¾Ê¾Ò´Ù¸é -1À» ¹İÈ¯
-	 */
-	this.countNode = function() {
-		if (this._selectedNodeListByLookup != null)
-			return this._selectedNodeListByLookup.length;
+    /**
+     * í˜„ì¬ ì„ íƒëœ ê°™ì€ íŒ¨ìŠ¤ë‚´ì— ìˆëŠ” ë…¸ë“œì˜ ìˆ˜ë¥¼ ë°˜í™˜í•œë‹¤.
+     * ë§Œì•½ì— <code>lookup</code>ìœ¼ë¡œ ì„ íƒë˜ì–´ ìˆì§€ ì•Šë‹¤ë©´ -1ì„ ë°˜í™˜í•œë‹¤.
+     * @return int ë°˜í™˜ê°¯ìˆ˜ ì„ íƒë˜ì§€ ì•Šì•˜ë‹¤ë©´ -1ì„ ë°˜í™˜
+     */
+    this.countNode = function() {
+        if (this._selectedNodeListByLookup != null)
+            return this._selectedNodeListByLookup.length;
 
-		return -1;
-	}
+        return -1;
+    }
 
 
-	/**
-	 * XMLReferer³»¿¡¼­ mark¿Í unmark¸¦ À§ÇÑ Á¤º¸¸¦ ´ã´Â °´Ã¼ÀÌ´Ù.
-	 * @author Eun Jeong-Ho, silver@intos.biz
-	 * @since 2004. 6. 4.
-	 */
-	function MarkInfo(selectedNodeListByLookup, selectedNodeByLookup, idx)
-	{
-		this._nodelist = selectedNodeListByLookup;
-		this._node = selectedNodeByLookup;
-		this._idx = idx;
-	}
+    /**
+     * XMLRefererë‚´ì—ì„œ markì™€ unmarkë¥¼ ìœ„í•œ ì •ë³´ë¥¼ ë‹´ëŠ” ê°ì²´ì´ë‹¤.
+     * @author Eun Jeong-Ho, silver@intos.biz
+     * @since 2004. 6. 4.
+     */
+    function MarkInfo(selectedNodeListByLookup, selectedNodeByLookup, idx)
+    {
+        this._nodelist = selectedNodeListByLookup;
+        this._node = selectedNodeByLookup;
+        this._idx = idx;
+    }
 }

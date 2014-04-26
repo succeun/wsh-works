@@ -1,0 +1,17 @@
+<job id="example">
+    <script language="JScript" src="../wsh-works.js"/>
+    <script language="JScript">
+        // 인터넷 익스플로러 실행
+        var ie = new InternetExplorer();
+        try {
+            ie.addressBar(false);
+            ie.menuBar(false);
+            ie.statusBar(false);
+            ie.toolBar(false);
+            ie.nevigate("http://www.android.com"); 
+            ie.visible(true);
+        } finally {
+            if (ie != null) { ie.quit(); }
+        }
+    </script>
+</job>

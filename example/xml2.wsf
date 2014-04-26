@@ -1,0 +1,30 @@
+<job id="example">
+    <script language="JScript" src="../wsh-works.js"/>
+    <script language="JScript">
+        // 네임스페이스를 보유한 XML 다루기
+        var ref = new XMLReferer().load("sample2.xml");
+        ref.setNamespaces('xmlns:xhtml="http://www.w3.org/1999/xhtml" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:all="http://www.w3.org/2002/01/xforms" xmlns:ev="http://www.w3.org/2001/xml-events"');
+        println(ref.lookup("/xhtml:html/xhtml:head/xhtml:title").getText());
+        println(ref.lookup("/xhtml:html/xhtml:head/all:model").getString("id"));
+        
+        // 모든 script 태그를 찾아 src 속성 출력하기
+        ref.reset();
+        ref.lookup("//all:script");
+        ref.mark();
+        while (ref.next()) {
+            var src = ref.attribute("src");
+            println(src);
+        }
+        ref.unmark();
+        
+        // 모든 caption 태그를 찾아 텍스트 출력하기
+        ref.reset();
+        ref.lookup("//all:caption");
+        ref.mark();
+        while (ref.next()) {
+            var txt = ref.getText();
+            println(txt);
+        }
+        ref.unmark();
+    </script>
+</job>

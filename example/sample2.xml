@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xhtml:html xmlns:xhtml="http://www.w3.org/1999/xhtml" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns="http://www.w3.org/2002/01/xforms" xmlns:ev="http://www.w3.org/2001/xml-events">
+	<xhtml:head>
+		<xhtml:title>Welcome WSH</xhtml:title>
+		<model id="model1">
+			<script type="javascript" src="common.js"/>
+		</model>
+	</xhtml:head>
+	<xhtml:body>
+		<script type="javascript" src="dummy.js"/>
+		<caption>Select</caption>
+		<caption>Insert</caption>
+		<caption>Update</caption>
+		<caption>Delete</caption>
+	</xhtml:body>
+</xhtml:html>
+

@@ -1,0 +1,20 @@
+<job id="example">
+    <script language="JScript" src="../wsh-works.js"/>
+    <script language="JScript">
+        var excel = new Excel();
+        try {
+            var book = excel.books(".\\sample.xlsx");
+            var sheet = book.sheets(1);
+            println("value : " + book);
+            println("value : " + book.sheetsCount());
+            println("value : " + sheet.name());
+            sheet.cells("B3").setValue("Welcom WSH");
+            println("value : " + sheet.cells("B3").value());
+            println("value : " + sheet.cells(3, 2).value());
+            book.save();
+            println("saved");
+        } finally {
+            if (excel != null) { excel.quit(); }
+        }
+    </script>
+</job>

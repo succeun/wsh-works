@@ -1,0 +1,13 @@
+<job id="example">
+    <script language="JScript" src="../wsh-works.js"/>
+    <script language="JScript">
+        // XML 문자열
+        var ref = new XMLReferer("<root><name>Kim</name></root>");
+        println(ref.lookup("/root/name").getText());
+        
+        // XML 파일 로드
+        var ref = new XMLReferer().load("sample.xml");
+        println(ref.lookup("/html/head/title").getText());
+        println(ref.lookup("/html/body").attribute("name"));
+    </script>
+</job>

@@ -1,28 +1,28 @@
 <job id="example">
-	<script language="JScript" src="../wsh-works.js"/>
-	<script language="JScript">
-		var odbc = new ODBC("TEST", "user", "pasword");
-		
-		try {
-			odbc.connect();
+    <script language="JScript" src="../wsh-works.js"/>
+    <script language="JScript">
+        var odbc = new ODBC("TEST", "user", "pasword");
+        
+        try {
+            odbc.connect();
 
-			var rs;
-			try {
-				var query = " select name, age from cm_org_emp where s_date='${std_mm}' and tel='${tel}' ";
-				rs = odbc.execute(query, {s_date: 201003, tel: "01012341234"});
+            var rs;
+            try {
+                var query = " select name, age from cm_org_emp where s_date='${std_mm}' and tel='${tel}' ";
+                rs = odbc.execute(query, {s_date: 201003, tel: "01012341234"});
 
-				while (rs.next()) {
-					var name = rs.value(0);
-					var age = rs.value(1);
-					println(name + " : " + age);
-				}
-			} finally {
-				if (rs != null) { rs.close(); }
-			}
+                while (rs.next()) {
+                    var name = rs.value(0);
+                    var age = rs.value(1);
+                    println(name + " : " + age);
+                }
+            } finally {
+                if (rs != null) { rs.close(); }
+            }
 
-		} finally {
-			if (odbc != null) { odbc.close(); }
-		}
+        } finally {
+            if (odbc != null) { odbc.close(); }
+        }
 
-	</script>
+    </script>
 </job>

@@ -1,18 +1,18 @@
 <job id="DLLDownloader">
-	<script language="JScript" src="../wsh-works.js"/>
-	<script language="JScript">
-		
-		var url = "http://www.google.co.kr";
-		var path = "test.txt";
-		var downloader = new Downloader();
-		downloader.receive(url, path, 
-							function(xmlhttp) {
-								//
-							},
-							function(xmlhttp) {
-								WScript.Echo("ÆÄÀÏÀ» ´Ù¿î·ÎµåÇÒ ¼ö ¾ø½À´Ï´Ù.");
-							}
-						);
+    <script language="JScript" src="../wsh-works.js"/>
+    <script language="JScript">
+        
+        var url = "http://www.android.com/new/images/banners/home1-1200.jpg";
+        var path = "image.jpg";
+        var downloader = new Downloader();
+        downloader.receive(url, path, 
+                            function(xmlhttp) {
+                                //
+                            },
+                            function(xmlhttp) {
+                                WScript.Echo("íŒŒì¼ì„ ë‹¤ìš´ë¡œë“œí•  ìˆ˜ ì—†ìŠµë‹ˆë‹¤.");
+                            }
+                        );
 
-	</script>
+    </script>
 </job>

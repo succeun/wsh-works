@@ -1,11 +1,24 @@
 <job id="example">
     <script language="JScript" src="../wsh-works.js"/>
-	<script language="JScript">
-		var http = new Connection();
-		http.call("http://www.daum.net");
-		if (http.isSuccess())
-			println(http.getText());
-		
-		println(Base64.encode("abcdef="));
-	</script>
+    <script language="JScript">
+        var http = new Connection();
+        http.call("http://www.android.com/");
+        if (http.isSuccess()) {
+            println(http.getText());
+        }
+        
+        println("========================================================================");
+
+        var http = new Connection();
+        http.call("https://developer.apple.com/search/index.php", 
+                        { 
+                         "q":"webview"
+                        } 
+                  );
+        if (http.isSuccess()) {
+            println(http.getText());
+            // if JSON,
+            // var data = eval(http.getText());
+        }
+    </script>
 </job>

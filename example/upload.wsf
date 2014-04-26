@@ -1,16 +1,16 @@
 <job id="example">
     <script language="JScript" src="../wsh-works.js"/>
-	<script language="JScript">
-		var uploader = new Uploader();
-		var filename = "./test.txt";
-		var url = "http://localhost:8000/test.jsp?filename=" + filename;
-		uploader.send(url, filename, 
-						function(xmlhttp) {
-							WScript.Echo("Success" + xmlhttp.responseText);
-						},
-						function(xmlhttp) {
-							WScript.Echo("Fail");
-						}
-					);
-	</script>
+    <script language="JScript">
+        var uploader = new Uploader();
+        var filename = "./test.txt";
+        var url = "http://localhost:8000/test.jsp?filename=" + filename;
+        uploader.send(url, filename, 
+                        function(xmlhttp) {
+                            WScript.Echo("Success" + xmlhttp.responseText);
+                        },
+                        function(xmlhttp) {
+                            WScript.Echo("Fail");
+                        }
+                    );
+    </script>
 </job>

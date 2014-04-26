@@ -1,38 +1,44 @@
 <job id="example">
-	<script language="JScript" src="../wsh-works.js"/>
-	<script language="JScript">
-		// ÇöÀç Æú´õ ÀÌÅÍ·¹ÀÌÅÍ¸¦ ÀÌ¿ëÇÏ¿© Ãâ·Â
-		var fs = new FileSystem();
-		var list = fs.dir(".").list();
-		var iter = new Iterator(list);
-		while (iter.hasNext()) {
-			var file = iter.next();
-			if (file.isFile()) {	
-				println(file.path() + " " + file.size());
-			}
-		}
+    <script language="JScript" src="../wsh-works.js"/>
+    <script language="JScript">
+        // í˜„ì¬ í´ë” ì´í„°ë ˆì´í„°ë¥¼ ì´ìš©í•˜ì—¬ ì¶œë ¥
+        var fs = new FileSystem();
+        var list = fs.dir(".").list();
+        var iter = new Iterator(list);
+        while (iter.hasNext()) {
+            var file = iter.next();
+            if (file.isFile()) {    
+                println(file.path() + " " + file.size());
+            }
+        }
 
-		// Æú´õ ÆÄÀÏ ³»¿ª Ãâ·Â
-		var fs = new FileSystem();
-		fs.iterateFiles("../lib", function(file) {
-									println(file.path() + " " + file.size());
-								}
-						);
+        // í´ë” íŒŒì¼ ë‚´ì—­ ì¶œë ¥
+        var fs = new FileSystem();
+        fs.iterateFiles("../lib", function(file) {
+                                    println(file.path() + " " + file.size());
+                                }
+                        );
+        
+        // íŒŒì¼ ì¡´ì¬ ìœ ë¬´
+        var fs = new FileSystem();
+        println(fs.exists("file.wsf")); // true
+        println(fs.exists("notexists.wsf")); // false
 
-		
-		// ÇöÀç °æ·ÎÀÇ ºÎ¸ğ °æ·Î Ãâ·Â
-		println(fs.dir(".").parent().path());
-		
-		var filename = "test.txt";
+        
+        // í˜„ì¬ ê²½ë¡œì˜ ë¶€ëª¨ ê²½ë¡œ ì¶œë ¥
+        println(fs.dir(".").parent().path());
+        
+        var filename = "test.txt";
 
-		// ÅØ½ºÆ® ÆÄÀÏ »ı¼º
-		var f = fs.dir(".").createFile(filename);
-		f.text("This is test text. Å×½ºÆ®ÀÔ´Ï´Ù.");
+        // í…ìŠ¤íŠ¸ íŒŒì¼ ìƒì„±
+        var fs = new FileSystem();
+        var f = fs.dir(".").createFile(filename);
+        f.text("This is test text. í…ŒìŠ¤íŠ¸ì…ë‹ˆë‹¤.");
 
-		// ÅØ½ºÆ® ÆÄÀÏ Ãâ·Â
-		println(fs.file(filename).text());
-		
-		// ÆÄÀÏ »èÁ¦
-		fs.file(filename).remove(true);
-	</script>
+        // í…ìŠ¤íŠ¸ íŒŒì¼ ì¶œë ¥
+        println(fs.file(filename).text());
+        
+        // íŒŒì¼ ì‚­ì œ
+        fs.file(filename).remove(true);
+    </script>
 </job>

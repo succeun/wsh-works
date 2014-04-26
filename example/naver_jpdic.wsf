@@ -1,0 +1,55 @@
+<job id="example">
+    <script language="JScript" src="../wsh-works.js"/>
+    <script language="JScript">
+        // 네이버 일본어 사전에 주어진 한자를 찾아 출력하거나, 파일로 기록한다.
+        var list = ["哀","愛"];
+
+        function getDic(http, dic, buf) {
+            
+            http.call("http://jpdic.naver.com/search.nhn?query=" + encodeURI(dic));
+            if (http.isSuccess()) {
+                var text = http.getText();
+                buf.append(dic);
+                
+                var re = /음독<\/span><\/dt>[\n\t\s]*<dd class="jp" lang="ja"><span class='jp' lang='ja'>([あ-ん]+)<\/span>/im;
+                buf.append("|" + getText(re, text));    // 음독
+                
+                var re = /훈독<\/span><\/dt>[\n\t\s]*<dd class="jp" lang="ja"><span class='jp' lang='ja'>([あ-ん]+)<\/span>/im;
+                buf.append("|" + getText(re, text));    // 훈독
+
+                var re = /총획<\/span><\/dt>[\n\t\s]*<dd class="stroke">([0-9]+)획<\/dd>/im;
+                buf.append("|" + getText(re, text));    // 한글
+
+                var re = /<span class="blind">JLPT (N[0-9]+)<\/span>/im;
+                buf.append("|" + getText(re, text));    // 급수
+                
+                buf.append("\n");
+            }
+        }
+
+        function getText(re, text) {
+            var m = text.match(re);
+            if (m != null) {
+                return m[1];
+            }
+            return " ";
+        }
+        
+        var buf = new StringBuffer();
+        var http = new Connection();
+        for (var i in list)
+        {
+            getDic(http, list[i], buf);
+        }
+        
+        // console 출력
+        var data = buf.toString();
+        println(data);
+
+        // 파일 출력
+        // var fs = new FileSystem();
+        // var dir = fs.dir(".");
+        // var file = dir.createFile("kanji.txt");
+        // file.text(data);
+    </script>
+</job>

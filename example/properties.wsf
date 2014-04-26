@@ -1,0 +1,13 @@
+<job id="example">
+    <script language="JScript" src="../wsh-works.js"/>
+    <script language="JScript">
+        var pros = new Properties();
+        pros.load("sample.properties");
+        println("["+pros.get("key1")+"]");
+        println("["+pros.get("key2")+"]");
+        println("["+pros.get("key3")+"]");
+        println("["+pros.get("key4")+"]");
+        println("["+pros.get("key5")+"]");
+        println("["+pros.get("key6")+"]");
+    </script>
+</job>
