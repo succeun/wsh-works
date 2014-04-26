@@ -1,10 +1,28 @@
 ﻿/* ========================================================================= 
- * WSH-Works WSH JavaScript framework, version 0.0.1
- *  (c) 2009-2009 Jeong-Ho, Eun
+ * WSH-Works is WSH(Windows Script Host) javascript wrapper library
+ *  (c) 2009-2014 Jeong-Ho, Eun
  * =========================================================================
  *
- *  WSH-Works is freely distributable under the terms of an MIT-style license.
- *  For details, see the Prototype web site: http://www.jsworks.org/
+ * Copyright (c) 2009-2014 Jeong-Ho, Eun
+ *  
+ * Permission is hereby granted, free of charge, to any person obtaining
+ * a copy of this software and associated documentation files (the
+ * "Software"), to deal in the Software without restriction, including
+ * without limitation the rights to use, copy, modify, merge, publish,
+ * distribute, sublicense, and/or sell copies of the Software, and to
+ * permit persons to whom the Software is furnished to do so, subject to
+ * the following conditions:
+ 
+ * The above copyright notice and this permission notice shall be
+ * included in all copies or substantial portions of the Software.
+ 
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+ * EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+ * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+ * NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE
+ * LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
+ * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
+ * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  *
  * ========================================================================= */
  
@@ -374,7 +392,9 @@ function Registry(computer) {
         // 존재하지 않으면 null
         return out_param.uValue;
     }
-}/**
+}
+
+/**
  * 특정 문자열로 시작하는지 여부를 반환한다.
  */
 String.prototype.startsWith = function(str) {
@@ -567,8 +587,7 @@ function StringBuffer() {
 }
 
 
-function HashMap()
-{
+function HashMap() {
     this.length = 0;
     this.items = new Array();
 
@@ -579,8 +598,7 @@ function HashMap()
         }
     }
    
-    this.remove = function(key)
-    {
+    this.remove = function(key) {
         var tmp;
         if (typeof(this.items[key]) != 'undefined') {
             this.length--;
@@ -595,8 +613,7 @@ function HashMap()
         return this.items[key];
     }
 
-    this.put = function(key, value)
-    {
+    this.put = function(key, value) {
         var tmp;
         if (typeof(value) != 'undefined') {
             if (typeof(this.items[key]) == 'undefined') {
@@ -612,13 +629,11 @@ function HashMap()
         return tmp;
     }
 
-    this.containsKey = function(key)
-    {
+    this.containsKey = function(key) {
         return typeof(this.items[key]) != 'undefined';
     }
 
-    this.clear = function()
-    {
+    this.clear = function() {
         for (var i in this.items) {
             delete this.items[i];
         }
@@ -1270,7 +1285,6 @@ function FileSystem() {
 }
 
 var URL = {
-
     encodeURL : function(str) {  
                 var str = str;  
                  str = "".concat(str);  
@@ -1842,32 +1856,28 @@ function Downloader() {
  * @author Eun Jeong-Ho, silver@intos.biz
  * @since 2004. 6. 4.
  */
-function StopWatch()
-{
+function StopWatch() {
     this._startTime = -1;
     this._stopTime = -1;
 
     /**
      * 시간 측정을 시작한다.
      */
-    this.start = function()
-    {
+    this.start = function() {
         this._startTime = new Date().getTime();
     }
 
     /**
      * 시간 측정을 종료한다.
      */
-    this.stop = function()
-    {
+    this.stop = function() {
         this._stopTime = new Date().getTime();
     }
 
     /**
      * 시간측정을 리셋한다.
      */
-    this.reset = function()
-    {
+    this.reset = function() {
         this._startTime = -1;
         this._stopTime = -1;
     }
@@ -1876,8 +1886,7 @@ function StopWatch()
      * 소요시간을 반환한다.
      * @param 소요시간
      */
-    this.getTime = function()
-    {
+    this.getTime = function() {
         if (this._stopTime == -1)
             return (new Date.getTime() - this._startTime);
         else
@@ -1888,8 +1897,7 @@ function StopWatch()
      * 걸리시간을 millisencods로 계산하여 문자열로 반환한다.
      * @param 문자열
      */
-    this.toString = function()
-    {
+    this.toString = function() {
         var time = this.getTime();
         var milliseconds = time;
 
@@ -1900,8 +1908,7 @@ function StopWatch()
      * 걸리시간을 hour, minutes, seconds, milliseconds로 계산하여 문자열로 반환한다.
      * @param 문자열
      */
-    this.getTimeString = function()
-    {
+    this.getTimeString = function() {
         var HIM = 60 * 60 * 1000;
         var MIM = 60 * 1000;
         var hours;
@@ -1941,8 +1948,7 @@ function StopWatch()
  * @author Eun Jeong-Ho, silver@intos.biz
  * @since 2004. 6. 24.
  */
-function Configuration()
-{
+function Configuration() {
     if (Configuration._singleton != null)
         return Configuration._singleton;
 
@@ -1997,10 +2003,11 @@ Configuration.getInstance = function() {
  * 기본적인 config.xml이 아닌 다른 xml을 사용시 url을 설정한다.
  * @param url
  */
-Configuration.file = function(filename)
-{
+Configuration.file = function(filename) {
     Configuration.filename = filename;
-}///////////////////////////////////////////////////////////////////////////////
+}
+
+///////////////////////////////////////////////////////////////////////////////
 /**
  * 데이터셋 또는 XML 문서를 XSLT를 이용하여 변환 문서를 얻는다.
  * (예제) new XMLTransformer().transform("datasetlist.xsl", resxml);
