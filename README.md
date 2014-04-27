@@ -2,5 +2,5 @@
 
 ## News
 
-Version **0.0.1** released.
+Version **0.1** released.
 
